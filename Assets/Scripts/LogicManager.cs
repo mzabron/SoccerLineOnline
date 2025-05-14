@@ -3,7 +3,7 @@ using UnityEngine;
 public class LogicManager : MonoBehaviour
 {
     private int width = 9;
-    private int height = 11;
+    private int height = 13;
     public GameObject nodePrefab;
 
     private NodeData[,] board;
