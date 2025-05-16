@@ -3,10 +3,10 @@ using UnityEngine;
 public class LogicManager : MonoBehaviour
 {
     private int width = 9;
-    private int height = 13;
+    private int height = 11;
     public GameObject nodePrefab;
 
-    private NodeData[,] board;
+    private Node[,] board;
 
     void Start()
     {
@@ -15,18 +15,18 @@ public class LogicManager : MonoBehaviour
 
     void GenerateBoard(int width, int height)
     {
-        board = new NodeData[width, height];
+        board = new Node[width, height];
 
         for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < height; y++)
+            for (int z = 0; z < height; z++)
             {
-                NodeData node = new NodeData(x, y);
-                board[x, y] = node;
+                Node node = new Node(x, z);
+                board[x, z] = node;
 
                 if (nodePrefab != null)
                 {
-                    Vector3 position = new Vector3(x, y, 0);
+                    Vector3 position = new Vector3(x, 0, z);
                     Instantiate(nodePrefab, position, Quaternion.identity);
                 }
             }

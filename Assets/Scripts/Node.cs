@@ -1,13 +1,13 @@
 using UnityEngine;
 
-public class NodeData
+public class Node
 {
     public Vector2Int position;
     public bool[] connections = new bool[8]; // N, NE, E, SE, S, SW, W, NW
 
-    public NodeData(int x, int y)
+    public Node(int x, int z)
     {
-        position = new Vector2Int(x, y);
+        position = new Vector2Int(x, z);
     }
 
     public void ConnectTo(Direction dir)
