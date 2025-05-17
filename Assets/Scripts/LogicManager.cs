@@ -153,5 +153,10 @@ public class LogicManager : MonoBehaviour
             }
         }
     }
+
+    public Node GetCurrentNode()
+    {
+        return currentNode;
+    }
 }
 
