@@ -6,12 +6,11 @@ public class LogicManager : MonoBehaviour
     private int width = 9;
     private int height = 11;
     public GameObject nodePrefab;
-    private Node[,] board; // 2D array of nodes, I'm using just x and y coordinates to
-                           // describe position of each node. However, in reality it's x
-                           // and z, while y is constant(0).
+    private Node[,] board;
     private Node currentNode;
     public Material lineMaterial;
-    //private bool isWhiteTurn = true;
+    private int currentPlayer = 1; // 1 or 2
+    private bool isFirstMove = true;
 
     void Start()
     {
@@ -73,12 +72,12 @@ public class LogicManager : MonoBehaviour
     public void SelectNode(Vector3 worldPosition)
     {
         int x = Mathf.RoundToInt(worldPosition.x);
-        int y = Mathf.RoundToInt(worldPosition.z);
+        int z = Mathf.RoundToInt(worldPosition.z);
 
-        if (x < 0 || x >= width || y < 0 || y >= height)
+        if (x < 0 || x >= width || z < 0 || z >= height)
             return;
 
-        Node selectedNode = board[x, y];
+        Node selectedNode = board[x, z];
 
         List<Node> neighbors = CheckForNeighbors();
         if (!neighbors.Contains(selectedNode))
@@ -93,6 +92,8 @@ public class LogicManager : MonoBehaviour
             return;
 
         Debug.Log($"Selected node at ({selectedNode.position.x}, {selectedNode.position.y})");
+
+        // ------------------------ Drawing lines ------------------------
 
         GameObject lineObj = new GameObject("Line");
         var lr = lineObj.AddComponent<LineRenderer>();
@@ -113,6 +114,31 @@ public class LogicManager : MonoBehaviour
         Direction oppositeDir = DirectionUtils.GetOppositeDirection(dir.Value);
         selectedNode.ConnectTo(oppositeDir);
         currentNode = selectedNode;
+
+
+        // -------------------- Turns Logic -----------------------
+
+        int connectionCount = 0;
+        foreach (bool c in selectedNode.connections)
+            if (c) connectionCount++;
+
+        if (isFirstMove)
+        {
+            isFirstMove = false;
+            SwitchTurn();
+            return;
+        }
+
+        if (connectionCount == 1)
+        {
+            SwitchTurn();
+        }
+    }
+
+    private void SwitchTurn()
+    {
+        currentPlayer = (currentPlayer == 1) ? 2 : 1;
+        Debug.Log($"Now it's Player {currentPlayer}'s turn!");
     }
 
     private System.Collections.IEnumerator AnimateLine(LineRenderer lr, Vector3 from, Vector3 to, float duration)
