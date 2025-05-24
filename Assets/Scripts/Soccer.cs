@@ -30,6 +30,7 @@ public class Soccer : MonoBehaviour
 
         if (direction.magnitude > 0.05f)
         {
+            rb.constraints = RigidbodyConstraints.None;
             direction.Normalize();
             rb.linearVelocity = direction * moveSpeed;
         }
@@ -37,6 +38,9 @@ public class Soccer : MonoBehaviour
         {
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+            rb.position = targetPosition;
+            rb.constraints = RigidbodyConstraints.FreezeAll;
         }
+
     }
 }
