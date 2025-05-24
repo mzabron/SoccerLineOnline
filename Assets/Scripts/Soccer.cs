@@ -3,7 +3,7 @@ using UnityEngine;
 public class Soccer : MonoBehaviour
 {
     private LogicManager logicManager;
-    private float moveSpeed = 4f;
+    private float moveSpeed = 4.5f;
     private Rigidbody rb;
 
     private void Start()

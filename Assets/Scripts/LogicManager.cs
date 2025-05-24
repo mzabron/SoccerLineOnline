@@ -10,7 +10,8 @@ public class LogicManager : MonoBehaviour
                            // describe position of each node. However, in reality it's x
                            // and z, while y is constant(0).
     private Node currentNode;
-    private bool isWhiteTurn = true;
+    public Material lineMaterial;
+    //private bool isWhiteTurn = true;
 
     void Start()
     {
@@ -93,23 +94,38 @@ public class LogicManager : MonoBehaviour
 
         Debug.Log($"Selected node at ({selectedNode.position.x}, {selectedNode.position.y})");
 
+        GameObject lineObj = new GameObject("Line");
+        var lr = lineObj.AddComponent<LineRenderer>();
+        lr.material = lineMaterial;
+        lr.positionCount = 2;
+        Vector3 from = new Vector3(currentNode.position.x, 0.001f, currentNode.position.y);
+        Vector3 to = new Vector3(selectedNode.position.x, 0.001f, selectedNode.position.y);
+        lr.SetPosition(0, from);
+        lr.SetPosition(1, from);
+        lr.widthMultiplier = 0.1f;
+        lr.useWorldSpace = true;
+        lr.numCapVertices = 4;
+        lr.alignment = LineAlignment.View;
+
+        StartCoroutine(AnimateLine(lr, from, to, 0.25f));
 
         currentNode.ConnectTo(dir.Value);
-        Debug.Log($"Connected from ({currentNode.position.x}, {currentNode.position.y}) to direction {dir.Value}");
-
-
         Direction oppositeDir = DirectionUtils.GetOppositeDirection(dir.Value);
         selectedNode.ConnectTo(oppositeDir);
-        Debug.Log($"Connected from ({selectedNode.position.x}, {selectedNode.position.y}) to direction {oppositeDir}");
-
-
-
         currentNode = selectedNode;
     }
-    void Move()
-    {
-        CheckForNeighbors();
 
+    private System.Collections.IEnumerator AnimateLine(LineRenderer lr, Vector3 from, Vector3 to, float duration)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            float t = elapsed / duration;
+            lr.SetPosition(1, Vector3.Lerp(from, to, t));
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        lr.SetPosition(1, to);
     }
 
     List<Node> CheckForNeighbors()
@@ -152,7 +168,90 @@ public class LogicManager : MonoBehaviour
                 }
             }
         }
+
+        //Connecting the border nodes to make field border moves impossible
+        // except for the goal gaps at (3,10)-(4,10), (4,10)-(5,10), (3,0)-(4,0), (4,0)-(5,0)
+        for (int x = 0; x < width; x++)
+        {
+            for (int z = 0; z < height; z++)
+            {
+                Node node = board[x, z];
+
+                bool isLeft = x == 0;
+                bool isRight = x == width - 1;
+                bool isTop = z == height - 1;
+                bool isBottom = z == 0;
+
+                // Corners
+                if ((isLeft && isBottom) || (isLeft && isTop) || (isRight && isBottom) || (isRight && isTop))
+                {
+                    if (!isTop)
+                    {
+                        node.ConnectTo(Direction.N);
+                        board[x, z + 1].ConnectTo(Direction.S);
+                    }
+                    if (!isBottom)
+                    {
+                        node.ConnectTo(Direction.S);
+                        board[x, z - 1].ConnectTo(Direction.N);
+                    }
+                    if (!isLeft)
+                    {
+                        node.ConnectTo(Direction.W);
+                        board[x - 1, z].ConnectTo(Direction.E);
+                    }
+                    if (!isRight)
+                    {
+                        node.ConnectTo(Direction.E);
+                        board[x + 1, z].ConnectTo(Direction.W);
+                    }
+                }
+                // Left/Right border nodes (not corners)
+                else if (isLeft || isRight)
+                {
+                    if (z + 1 < height)
+                    {
+                        node.ConnectTo(Direction.N);
+                        board[x, z + 1].ConnectTo(Direction.S);
+                    }
+                    if (z - 1 >= 0)
+                    {
+                        node.ConnectTo(Direction.S);
+                        board[x, z - 1].ConnectTo(Direction.N);
+                    }
+                }
+                // Top/Bottom border nodes (not corners)
+                else if (isTop || isBottom)
+                {
+                    if (x - 1 >= 0 && !IsGoalGap(x, x - 1, z))
+                    {
+                        node.ConnectTo(Direction.W);
+                        board[x - 1, z].ConnectTo(Direction.E);
+                    }
+                    if (x + 1 < width && !IsGoalGap(x, x + 1, z))
+                    {
+                        node.ConnectTo(Direction.E);
+                        board[x + 1, z].ConnectTo(Direction.W);
+                    }
+                }
+
+            }
+        }
     }
+
+    private bool IsGoalGap(int x1, int x2, int z)
+    {
+        if ((z == 10) && (
+            (x1 == 3 && x2 == 4) || (x1 == 4 && x2 == 3) ||
+            (x1 == 4 && x2 == 5) || (x1 == 5 && x2 == 4)))
+            return true;
+        if ((z == 0) && (
+            (x1 == 3 && x2 == 4) || (x1 == 4 && x2 == 3) ||
+            (x1 == 4 && x2 == 5) || (x1 == 5 && x2 == 4)))
+            return true;
+        return false;
+    }
+
 
     public Node GetCurrentNode()
     {
