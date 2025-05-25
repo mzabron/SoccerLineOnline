@@ -108,7 +108,16 @@ public class LogicManager : MonoBehaviour
         lr.numCapVertices = 4;
         lr.alignment = LineAlignment.View;
 
+        Color FirstPlayerColor = new Color32(0x6e, 0xc3, 0xff, 0xff);
+        Color SecondPlayerColor = new Color32(0xFF, 0x77, 0x79, 0xFF);
+
+        Color startColor = (currentPlayer == 1) ? FirstPlayerColor : SecondPlayerColor;
+        Color baseColor = new Color32(0x3F, 0x3F, 0x3F, 0xFF);
+        lr.material.color = startColor;
+
         StartCoroutine(AnimateLine(lr, from, to, 0.25f));
+
+        StartCoroutine(FadeOut(lr, startColor, baseColor, 2f));
 
         currentNode.ConnectTo(dir.Value);
         Direction oppositeDir = DirectionUtils.GetOppositeDirection(dir.Value);
@@ -140,6 +149,21 @@ public class LogicManager : MonoBehaviour
         currentPlayer = (currentPlayer == 1) ? 2 : 1;
         Debug.Log($"Now it's Player {currentPlayer}'s turn!");
     }
+
+    private System.Collections.IEnumerator FadeOut(LineRenderer lr, Color fromColor, Color toColor, float duration)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            float t = elapsed / duration;
+            Color lerped = Color.Lerp(fromColor, toColor, t);
+            lr.material.color = lerped;
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        lr.material.color = toColor;
+    }
+
 
     private System.Collections.IEnumerator AnimateLine(LineRenderer lr, Vector3 from, Vector3 to, float duration)
     {
