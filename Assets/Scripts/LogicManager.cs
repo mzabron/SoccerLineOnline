@@ -6,11 +6,15 @@ public class LogicManager : MonoBehaviour
     private int width = 9;
     private int height = 11;
     public GameObject nodePrefab;
+    public GameObject topGoalModel;
+    public GameObject bottomGoalModel;
+    public GameObject ball;
     private Node[,] board;
     private Node currentNode;
     public Material lineMaterial;
     private int currentPlayer = 1; // 1 or 2
     private bool isFirstMove = true;
+    public bool isGameOver = false;
 
     void Start()
     {
@@ -35,20 +39,73 @@ public class LogicManager : MonoBehaviour
 
         if (tapWorldPos.HasValue)
         {
+            Vector3 tap = tapWorldPos.Value;
+            
+            int x = currentNode.position.x;
+            int z = currentNode.position.y;
+
+            bool isBottomGoalAdj = (z == 0) && (x >= 3 && x <= 5);
+            bool isTopGoalAdj = (z == 10) && (x >= 3 && x <= 5);
+
+            if (isBottomGoalAdj || isTopGoalAdj)
+            {
+                GameObject goalModel = isTopGoalAdj ? topGoalModel : bottomGoalModel;
+
+                Ray ray = Camera.main.ScreenPointToRay(Input.touchCount > 0 ? (Vector3)Input.GetTouch(0).position : Input.mousePosition);
+                RaycastHit hit;
+                if (Physics.Raycast(ray, out hit))
+                {
+                    if (hit.collider != null && hit.collider.gameObject == goalModel)
+                    {
+                        float goalX = Mathf.Clamp(tap.x, 3f, 5f);
+                        float goalZ = isTopGoalAdj ? 10.7f : -0.7f;
+                        Vector3 from = new Vector3(currentNode.position.x, 0.001f, currentNode.position.y);
+                        Vector3 to = new Vector3(goalX, 0.001f, goalZ);
+
+                        GameObject lineObj = new GameObject("GoalLine");
+                        var lr = lineObj.AddComponent<LineRenderer>();
+                        lr.material = lineMaterial;
+                        lr.positionCount = 2;
+                        lr.SetPosition(0, from);
+                        lr.SetPosition(1, from);
+                        lr.widthMultiplier = 0.1f;
+                        lr.useWorldSpace = true;
+                        lr.numCapVertices = 4;
+                        lr.alignment = LineAlignment.View;
+
+                        Color playerColor = (currentPlayer == 1) ? new Color32(0x6e, 0xc3, 0xff, 0xff) : new Color32(0xFF, 0x77, 0x79, 0xFF);
+                        Color baseColor = new Color32(0x3F, 0x3F, 0x3F, 0xFF);
+                        lr.material.color = playerColor;
+
+                        StartCoroutine(AnimateLine(lr, from, to, 0.25f));
+                        StartCoroutine(FadeOut(lr, playerColor, baseColor, 2f));
+
+                        if (ball != null)
+                        {
+                            Soccer soccerScript = ball.GetComponent<Soccer>();
+                            if (soccerScript != null)
+                                soccerScript.MoveToGoal(to);
+                        }
+
+                        Debug.Log($"Goal reached at ({goalX}, {goalZ}) for {currentPlayer}'s Player");
+                        return;
+                    }
+                }
+            }
+
             Node closestNode = null;
             float minDist = float.MaxValue;
-            Vector3 tap = tapWorldPos.Value;
 
-            for (int x = 0; x < width; x++)
+            for (int x_ = 0; x_ < width; x_++)
             {
-                for (int z = 0; z < height; z++)
+                for (int z_ = 0; z_ < height; z_++)
                 {
-                    Vector3 nodePos = new Vector3(x, 0, z);
+                    Vector3 nodePos = new Vector3(x_, 0, z_);
                     float dist = Vector3.Distance(tap, nodePos);
                     if (dist < minDist)
                     {
                         minDist = dist;
-                        closestNode = board[x, z];
+                        closestNode = board[x_, z_];
                     }
                 }
             }
@@ -127,6 +184,12 @@ public class LogicManager : MonoBehaviour
 
         // -------------------- Turns Logic -----------------------
 
+        if (CheckForBlock())
+        {
+            Debug.Log($"Player {(currentPlayer == 1 ? "2": "1")} won");
+            SwitchTurn();
+            return;
+        }
         int connectionCount = 0;
         foreach (bool c in selectedNode.connections)
             if (c) connectionCount++;
@@ -198,6 +261,46 @@ public class LogicManager : MonoBehaviour
         }
         return neighbors;
 
+    }
+
+    public bool CheckForBlock()
+    {
+        Vector2Int pos = currentNode.position;
+        int x = pos.x;
+        int y = pos.y;
+
+        int connectionCount = 0;
+        foreach (bool c in currentNode.connections)
+            if (c) connectionCount++;
+
+        bool isCenter = (x >= 1 && x <= 7) && (y >= 1 && y <= 9);
+        bool isLeftBorder = (x == 0) && (y >= 1 && y <= 9);
+        bool isRightBorder = (x == 8) && (y >= 1 && y <= 9);
+        bool isBottomBorder = (y == 0) && (x >= 1 && x <= 7);
+        bool isTopBorder = (y == 10) && (x >= 1 && x <= 7);
+        bool isGoalAdjacent = ((x >= 3 && x <= 5) && (y == 0 || y == 10));
+        bool isCorner = (x == 0 && y == 0) || (x == 0 && y == 10) ||
+                        (x == 8 && y == 0) || (x == 8 && y == 10);
+
+        if (isCenter)
+        {
+            if (connectionCount == 8)
+                return true;
+        }
+
+        if ((isLeftBorder || isRightBorder || isBottomBorder || isTopBorder) && !isGoalAdjacent)
+        {
+            if (connectionCount == 5)
+                return true;
+        }
+
+        if (isCorner)
+        {
+            if (connectionCount == 3)
+                return true;
+        }
+
+        return false;
     }
 
     void GenerateBoard(int width, int height)

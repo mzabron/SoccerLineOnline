@@ -6,6 +6,9 @@ public class Soccer : MonoBehaviour
     private float moveSpeed = 4.5f;
     private Rigidbody rb;
 
+    private bool movingToGoal = false;
+    private Vector3 goalTarget;
+
     private void Start()
     {
         if (logicManager == null)
@@ -19,6 +22,39 @@ public class Soccer : MonoBehaviour
     void FixedUpdate()
     {
         if (rb == null) return;
+
+        if (logicManager != null && logicManager.isGameOver)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.constraints = RigidbodyConstraints.FreezeAll;
+            return;
+        }
+
+        if (movingToGoal)
+        {
+            Vector3 dir = (goalTarget - transform.position);
+            dir.y = 0;
+
+            if (dir.magnitude > 0.05f)
+            {
+                rb.constraints = RigidbodyConstraints.None;
+                dir.Normalize();
+                rb.linearVelocity = dir * moveSpeed;
+            }
+            else
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.position = goalTarget;
+                rb.constraints = RigidbodyConstraints.FreezeAll;
+                movingToGoal = false;
+
+                if (logicManager != null)
+                    logicManager.isGameOver = true;
+            }
+            return;
+        }
 
         Node currentNode = logicManager.GetCurrentNode();
         if (currentNode == null)
@@ -42,5 +78,11 @@ public class Soccer : MonoBehaviour
             rb.constraints = RigidbodyConstraints.FreezeAll;
         }
 
+    }
+
+    public void MoveToGoal(Vector3 goalPos)
+    {
+        goalTarget = goalPos;
+        movingToGoal = true;
     }
 }
