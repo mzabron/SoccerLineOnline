@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class LogicManager : MonoBehaviour
 {
@@ -27,59 +28,65 @@ public class LogicManager : MonoBehaviour
 
     void Update()
     {
-        if (Input.touchCount > 0)
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
         {
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began)
+            var touch = Touchscreen.current.primaryTouch;
+            Vector2 touchPosition = touch.position.ReadValue();
+
+            if (touch.press.wasPressedThisFrame)
             {
-                swipeStart = touch.position;
+                swipeStart = touchPosition;
                 isSwiping = true;
                 swipeDetected = false;
             }
-            else if (touch.phase == TouchPhase.Moved && isSwiping)
+            else if (isSwiping && touch.press.isPressed)
             {
-                Vector2 swipeDelta = touch.position - swipeStart;
+                Vector2 swipeDelta = touchPosition - swipeStart;
                 if (!swipeDetected && swipeDelta.magnitude > 50f)
                 {
                     swipeDetected = true;
                     TrySwipeMove(swipeDelta);
                 }
             }
-            else if (touch.phase == TouchPhase.Ended && isSwiping)
+            else if (isSwiping && touch.press.wasReleasedThisFrame)
             {
-                Vector2 swipeDelta = touch.position - swipeStart;
+                Vector2 swipeDelta = touchPosition - swipeStart;
                 isSwiping = false;
                 if (!swipeDetected && swipeDelta.magnitude < 50f)
                 {
-                    Vector3 tapWorldPos = GetWorldPosition(touch.position);
+                    Vector3 tapWorldPos = GetWorldPosition(touchPosition);
                     HandleTap(tapWorldPos);
                 }
             }
         }
+
 #if UNITY_EDITOR
-        if (Input.GetMouseButtonDown(0))
+        if (Mouse.current != null)
         {
-            swipeStart = Input.mousePosition;
-            isSwiping = true;
-            swipeDetected = false;
-        }
-        else if (Input.GetMouseButton(0) && isSwiping)
-        {
-            Vector2 swipeDelta = (Vector2)Input.mousePosition - swipeStart;
-            if (!swipeDetected && swipeDelta.magnitude > 50f)
+            if (Mouse.current.leftButton.wasPressedThisFrame)
             {
-                swipeDetected = true;
-                TrySwipeMove(swipeDelta);
+                swipeStart = Mouse.current.position.ReadValue();
+                isSwiping = true;
+                swipeDetected = false;
             }
-        }
-        else if (Input.GetMouseButtonUp(0) && isSwiping)
-        {
-            Vector2 swipeDelta = (Vector2)Input.mousePosition - swipeStart;
-            isSwiping = false;
-            if (!swipeDetected && swipeDelta.magnitude < 50f)
+            else if (isSwiping && Mouse.current.leftButton.isPressed)
             {
-                Vector3 tapWorldPos = GetWorldPosition(Input.mousePosition);
-                HandleTap(tapWorldPos);
+                Vector2 swipeDelta = Mouse.current.position.ReadValue() - swipeStart;
+                if (!swipeDetected && swipeDelta.magnitude > 50f)
+                {
+                    swipeDetected = true;
+                    TrySwipeMove(swipeDelta);
+                }
+            }
+            else if (isSwiping && Mouse.current.leftButton.wasReleasedThisFrame)
+            {
+                Vector2 swipeDelta = Mouse.current.position.ReadValue() - swipeStart;
+                isSwiping = false;
+                if (!swipeDetected && swipeDelta.magnitude < 50f)
+                {
+                    Vector3 tapWorldPos = GetWorldPosition(Mouse.current.position.ReadValue());
+                    HandleTap(tapWorldPos);
+                }
             }
         }
 #endif
