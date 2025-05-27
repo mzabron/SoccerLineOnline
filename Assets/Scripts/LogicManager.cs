@@ -15,6 +15,9 @@ public class LogicManager : MonoBehaviour
     private int currentPlayer = 1; // 1 or 2
     private bool isFirstMove = true;
     public bool isGameOver = false;
+    private Vector2 swipeStart;
+    private bool isSwiping = false;
+    private bool swipeDetected = false;
 
     void Start()
     {
@@ -24,98 +27,143 @@ public class LogicManager : MonoBehaviour
 
     void Update()
     {
-        Vector3? tapWorldPos = null;
-
-        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+        if (Input.touchCount > 0)
         {
-            tapWorldPos = GetWorldPosition(Input.GetTouch(0).position);
+            Touch touch = Input.GetTouch(0);
+            if (touch.phase == TouchPhase.Began)
+            {
+                swipeStart = touch.position;
+                isSwiping = true;
+                swipeDetected = false;
+            }
+            else if (touch.phase == TouchPhase.Moved && isSwiping)
+            {
+                Vector2 swipeDelta = touch.position - swipeStart;
+                if (!swipeDetected && swipeDelta.magnitude > 50f)
+                {
+                    swipeDetected = true;
+                    TrySwipeMove(swipeDelta);
+                }
+            }
+            else if (touch.phase == TouchPhase.Ended && isSwiping)
+            {
+                Vector2 swipeDelta = touch.position - swipeStart;
+                isSwiping = false;
+                if (!swipeDetected && swipeDelta.magnitude < 50f)
+                {
+                    Vector3 tapWorldPos = GetWorldPosition(touch.position);
+                    HandleTap(tapWorldPos);
+                }
+            }
         }
 #if UNITY_EDITOR
         if (Input.GetMouseButtonDown(0))
         {
-            tapWorldPos = GetWorldPosition(Input.mousePosition);
+            swipeStart = Input.mousePosition;
+            isSwiping = true;
+            swipeDetected = false;
+        }
+        else if (Input.GetMouseButton(0) && isSwiping)
+        {
+            Vector2 swipeDelta = (Vector2)Input.mousePosition - swipeStart;
+            if (!swipeDetected && swipeDelta.magnitude > 50f)
+            {
+                swipeDetected = true;
+                TrySwipeMove(swipeDelta);
+            }
+        }
+        else if (Input.GetMouseButtonUp(0) && isSwiping)
+        {
+            Vector2 swipeDelta = (Vector2)Input.mousePosition - swipeStart;
+            isSwiping = false;
+            if (!swipeDetected && swipeDelta.magnitude < 50f)
+            {
+                Vector3 tapWorldPos = GetWorldPosition(Input.mousePosition);
+                HandleTap(tapWorldPos);
+            }
         }
 #endif
+    }
 
-        if (tapWorldPos.HasValue)
+
+    private void HandleTap(Vector3 tap)
+    {
+        int x = currentNode.position.x;
+        int z = currentNode.position.y;
+
+        bool isBottomGoalAdj = (z == 0) && (x >= 3 && x <= 5);
+        bool isTopGoalAdj = (z == 10) && (x >= 3 && x <= 5);
+
+        if (isBottomGoalAdj || isTopGoalAdj)
         {
-            Vector3 tap = tapWorldPos.Value;
-            
-            int x = currentNode.position.x;
-            int z = currentNode.position.y;
+            GameObject goalModel = isTopGoalAdj ? topGoalModel : bottomGoalModel;
 
-            bool isBottomGoalAdj = (z == 0) && (x >= 3 && x <= 5);
-            bool isTopGoalAdj = (z == 10) && (x >= 3 && x <= 5);
-
-            if (isBottomGoalAdj || isTopGoalAdj)
+            Ray ray = Camera.main.ScreenPointToRay(Input.touchCount > 0 ? (Vector3)Input.GetTouch(0).position : Input.mousePosition);
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit))
             {
-                GameObject goalModel = isTopGoalAdj ? topGoalModel : bottomGoalModel;
-
-                Ray ray = Camera.main.ScreenPointToRay(Input.touchCount > 0 ? (Vector3)Input.GetTouch(0).position : Input.mousePosition);
-                RaycastHit hit;
-                if (Physics.Raycast(ray, out hit))
+                if (hit.collider != null && hit.collider.gameObject == goalModel)
                 {
-                    if (hit.collider != null && hit.collider.gameObject == goalModel)
+                    float goalX = Mathf.Clamp(tap.x, 3f, 5f);
+                    float goalZ = isTopGoalAdj ? 10.7f : -0.7f;
+                    Vector3 from = new Vector3(currentNode.position.x, 0.001f, currentNode.position.y);
+                    Vector3 to = new Vector3(goalX, 0.001f, goalZ);
+
+                    GameObject lineObj = new GameObject("GoalLine");
+                    var lr = lineObj.AddComponent<LineRenderer>();
+                    lr.material = lineMaterial;
+                    lr.positionCount = 2;
+                    lr.SetPosition(0, from);
+                    lr.SetPosition(1, from);
+                    lr.widthMultiplier = 0.1f;
+                    lr.useWorldSpace = true;
+                    lr.numCapVertices = 4;
+                    lr.alignment = LineAlignment.View;
+
+                    Color playerColor = (currentPlayer == 1) ? new Color32(0x6e, 0xc3, 0xff, 0xff) : new Color32(0xFF, 0x77, 0x79, 0xFF);
+                    Color baseColor = new Color32(0x3F, 0x3F, 0x3F, 0xFF);
+                    lr.material.color = playerColor;
+
+                    StartCoroutine(AnimateLine(lr, from, to, 0.25f));
+                    StartCoroutine(FadeOut(lr, playerColor, baseColor, 2f));
+
+                    if (soccer != null)
                     {
-                        float goalX = Mathf.Clamp(tap.x, 3f, 5f);
-                        float goalZ = isTopGoalAdj ? 10.7f : -0.7f;
-                        Vector3 from = new Vector3(currentNode.position.x, 0.001f, currentNode.position.y);
-                        Vector3 to = new Vector3(goalX, 0.001f, goalZ);
-
-                        GameObject lineObj = new GameObject("GoalLine");
-                        var lr = lineObj.AddComponent<LineRenderer>();
-                        lr.material = lineMaterial;
-                        lr.positionCount = 2;
-                        lr.SetPosition(0, from);
-                        lr.SetPosition(1, from);
-                        lr.widthMultiplier = 0.1f;
-                        lr.useWorldSpace = true;
-                        lr.numCapVertices = 4;
-                        lr.alignment = LineAlignment.View;
-
-                        Color playerColor = (currentPlayer == 1) ? new Color32(0x6e, 0xc3, 0xff, 0xff) : new Color32(0xFF, 0x77, 0x79, 0xFF);
-                        Color baseColor = new Color32(0x3F, 0x3F, 0x3F, 0xFF);
-                        lr.material.color = playerColor;
-
-                        StartCoroutine(AnimateLine(lr, from, to, 0.25f));
-                        StartCoroutine(FadeOut(lr, playerColor, baseColor, 2f));
-
-                        if (soccer != null)
-                        {
-                            Soccer soccer = this.soccer.GetComponent<Soccer>();
-                            if (soccer != null)
-                                soccer.MoveToGoal(to);
-                        }
-
-                        Debug.Log($"Goal reached at ({goalX}, {goalZ}) for {currentPlayer}'s Player");
-                        return;
+                        Soccer soccerScript = soccer.GetComponent<Soccer>();
+                        if (soccerScript != null)
+                            soccerScript.MoveToGoal(to);
                     }
+
+                    Debug.Log($"Goal reached at ({goalX}, {goalZ}) for {currentPlayer}'s Player");
+                    return;
                 }
-            }
-
-            Node closestNode = null;
-            float minDist = float.MaxValue;
-
-            for (int x_ = 0; x_ < width; x_++)
-            {
-                for (int z_ = 0; z_ < height; z_++)
-                {
-                    Vector3 nodePos = new Vector3(x_, 0, z_);
-                    float dist = Vector3.Distance(tap, nodePos);
-                    if (dist < minDist)
-                    {
-                        minDist = dist;
-                        closestNode = board[x_, z_];
-                    }
-                }
-            }
-
-            if (closestNode != null && minDist <= 0.5f)
-            {
-                SelectNode(new Vector3(closestNode.position.x, 0, closestNode.position.y));
             }
         }
+
+        Node closestNode = null;
+        float minDist = float.MaxValue;
+
+        for (int x_ = 0; x_ < width; x_++)
+        {
+            for (int z_ = 0; z_ < height; z_++)
+            {
+                Vector3 nodePos = new Vector3(x_, 0, z_);
+                float dist = Vector3.Distance(tap, nodePos);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    closestNode = board[x_, z_];
+                }
+            }
+        }
+
+        if (closestNode != null && minDist <= 0.5f)
+        {
+            SelectNode(new Vector3(closestNode.position.x, 0, closestNode.position.y));
+        }
     }
+
+
     Vector3 GetWorldPosition(Vector2 screenPosition)
     {
         Ray ray = Camera.main.ScreenPointToRay(screenPosition);
@@ -128,6 +176,9 @@ public class LogicManager : MonoBehaviour
 
     public void SelectNode(Vector3 worldPosition)
     {
+        if (isGameOver)
+            return;
+
         int x = Mathf.RoundToInt(worldPosition.x);
         int z = Mathf.RoundToInt(worldPosition.z);
 
@@ -208,6 +259,162 @@ public class LogicManager : MonoBehaviour
             SwitchTurn();
         }
     }
+
+    private void TrySwipeMove(Vector2 swipeDelta)
+    {
+        if (swipeDelta.magnitude < 50f)
+            return;
+
+        float angle = Mathf.Atan2(swipeDelta.y, swipeDelta.x) * Mathf.Rad2Deg;
+        Direction? dir = null;
+
+        if (angle >= -22.5f && angle < 22.5f)
+            dir = Direction.E;
+        else if (angle >= 22.5f && angle < 67.5f)
+            dir = Direction.NE;
+        else if (angle >= 67.5f && angle < 112.5f)
+            dir = Direction.N;
+        else if (angle >= 112.5f && angle < 157.5f)
+            dir = Direction.NW;
+        else if (angle >= 157.5f || angle < -157.5f)
+            dir = Direction.W;
+        else if (angle >= -157.5f && angle < -112.5f)
+            dir = Direction.SW;
+        else if (angle >= -112.5f && angle < -67.5f)
+            dir = Direction.S;
+        else if (angle >= -67.5f && angle < -22.5f)
+            dir = Direction.SE;
+
+        int x = currentNode.position.x;
+        int z = currentNode.position.y;
+        bool isBottomGoalAdj = (z == 0) && (x >= 3 && x <= 5);
+        bool isTopGoalAdj = (z == 10) && (x >= 3 && x <= 5);
+
+        if (isTopGoalAdj && dir != null)
+        {
+            float goalY = 0.001f, goalZ = 10.7f;
+            if (x == 3)
+            {
+                if (dir == Direction.NW) return;
+                if (dir == Direction.N)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(3, goalY, goalZ));
+                else if (dir == Direction.NE)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ));
+                else
+                    goto normalSwipe;
+                return;
+            }
+            else if (x == 5)
+            {
+                if (dir == Direction.NE) return;
+                if (dir == Direction.N)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(5, goalY, goalZ));
+                else if (dir == Direction.NW)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ));
+                else
+                    goto normalSwipe;
+                return;
+            }
+            else if (x == 4)
+            {
+                if (dir == Direction.N)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ));
+                else if (dir == Direction.NW)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(3, goalY, goalZ));
+                else if (dir == Direction.NE)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(5, goalY, goalZ));
+                else
+                    goto normalSwipe;
+                return;
+            }
+        }
+        if (isBottomGoalAdj && dir != null)
+        {
+            float goalY = 0.001f, goalZ = -0.7f;
+            if (x == 3)
+            {
+                if (dir == Direction.SW) return;
+                if (dir == Direction.S)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(3, goalY, goalZ));
+                else if (dir == Direction.SE)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ));
+                else
+                    goto normalSwipe;
+                return;
+            }
+            else if (x == 5)
+            {
+                if (dir == Direction.SE) return;
+                if (dir == Direction.S)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(5, goalY, goalZ));
+                else if (dir == Direction.SW)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ));
+                else
+                    goto normalSwipe;
+                return;
+            }
+            else if (x == 4)
+            {
+                if (dir == Direction.S)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ));
+                else if (dir == Direction.SW)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(3, goalY, goalZ));
+                else if (dir == Direction.SE)
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(5, goalY, goalZ));
+                else
+                    goto normalSwipe;
+                return;
+            }
+        }
+
+    normalSwipe:
+        if (dir != null)
+        {
+            Vector2Int offset = DirectionUtils.DirectionToOffset(dir.Value);
+            Vector2Int newPos = currentNode.position + offset;
+
+            if (newPos.x >= 0 && newPos.x < width && newPos.y >= 0 && newPos.y < height)
+            {
+                Node neighbor = board[newPos.x, newPos.y];
+                List<Node> neighbors = CheckForNeighbors();
+                if (neighbor != null && neighbors.Contains(neighbor))
+                {
+                    SelectNode(new Vector3(neighbor.position.x, 0, neighbor.position.y));
+                }
+            }
+        }
+    }
+
+
+    private void DrawGoalLineAndMoveSoccer(Vector3 from, Vector3 to)
+    {
+        GameObject lineObj = new GameObject("GoalLine");
+        var lr = lineObj.AddComponent<LineRenderer>();
+        lr.material = lineMaterial;
+        lr.positionCount = 2;
+        lr.SetPosition(0, from);
+        lr.SetPosition(1, from);
+        lr.widthMultiplier = 0.1f;
+        lr.useWorldSpace = true;
+        lr.numCapVertices = 4;
+        lr.alignment = LineAlignment.View;
+
+        Color playerColor = (currentPlayer == 1) ? new Color32(0x6e, 0xc3, 0xff, 0xff) : new Color32(0xFF, 0x77, 0x79, 0xFF);
+        Color baseColor = new Color32(0x3F, 0x3F, 0x3F, 0xFF);
+        lr.material.color = playerColor;
+
+        StartCoroutine(AnimateLine(lr, from, to, 0.25f));
+        StartCoroutine(FadeOut(lr, playerColor, baseColor, 2f));
+
+        if (soccer != null)
+        {
+            Soccer soccer = this.soccer.GetComponent<Soccer>();
+            if (soccer != null)
+                soccer.MoveToGoal(to);
+            Debug.Log($"Goal reached at ({to.x}, {to.z}) for Player {currentPlayer}");
+        }
+    }
+
 
     private void SwitchTurn()
     {
