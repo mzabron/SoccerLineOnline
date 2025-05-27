@@ -8,7 +8,7 @@ public class LogicManager : MonoBehaviour
     public GameObject nodePrefab;
     public GameObject topGoalModel;
     public GameObject bottomGoalModel;
-    public GameObject ball;
+    public GameObject soccer;
     private Node[,] board;
     private Node currentNode;
     public Material lineMaterial;
@@ -80,11 +80,11 @@ public class LogicManager : MonoBehaviour
                         StartCoroutine(AnimateLine(lr, from, to, 0.25f));
                         StartCoroutine(FadeOut(lr, playerColor, baseColor, 2f));
 
-                        if (ball != null)
+                        if (soccer != null)
                         {
-                            Soccer soccerScript = ball.GetComponent<Soccer>();
-                            if (soccerScript != null)
-                                soccerScript.MoveToGoal(to);
+                            Soccer soccer = this.soccer.GetComponent<Soccer>();
+                            if (soccer != null)
+                                soccer.MoveToGoal(to);
                         }
 
                         Debug.Log($"Goal reached at ({goalX}, {goalZ}) for {currentPlayer}'s Player");
@@ -187,7 +187,9 @@ public class LogicManager : MonoBehaviour
         if (CheckForBlock())
         {
             Debug.Log($"Player {(currentPlayer == 1 ? "2": "1")} won");
-            SwitchTurn();
+            Soccer soccer = this.soccer.GetComponent<Soccer>();
+            if (soccer != null)
+                soccer.MoveToGoal(to);
             return;
         }
         int connectionCount = 0;

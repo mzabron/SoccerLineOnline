@@ -831,7 +831,7 @@ MonoBehaviour:
   nodePrefab: {fileID: 7818992141535748694, guid: 22dfea239b5c31940b44e6079917b77c, type: 3}
   topGoalModel: {fileID: 947850829}
   bottomGoalModel: {fileID: 1418596444}
-  ball: {fileID: 242609540}
+  soccer: {fileID: 242609540}
   lineMaterial: {fileID: 2100000, guid: b5218723bcc78574eaf0820a2b3c0ff9, type: 2}
   isGameOver: 0
 --- !u!4 &1587072218
