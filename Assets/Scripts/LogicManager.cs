@@ -23,26 +23,26 @@ public class LogicManager : MonoBehaviour
     void Start()
     {
         GenerateBoard(width, height);
-        currentNode = board[(width - 1) / 2, (height - 1) / 2]; 
+        currentNode = board[(width - 1) / 2, (height - 1) / 2];
+        FitPerspectiveCameraToField();
     }
 
     void Update()
     {
-        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+        if (Touchscreen.current != null)
         {
             var touch = Touchscreen.current.primaryTouch;
-            Vector2 touchPosition = touch.position.ReadValue();
 
             if (touch.press.wasPressedThisFrame)
             {
-                swipeStart = touchPosition;
+                swipeStart = touch.position.ReadValue();
                 isSwiping = true;
                 swipeDetected = false;
             }
             else if (isSwiping && touch.press.isPressed)
             {
-                Vector2 swipeDelta = touchPosition - swipeStart;
-                if (!swipeDetected && swipeDelta.magnitude > 50f)
+                Vector2 swipeDelta = touch.position.ReadValue() - swipeStart;
+                if (!swipeDetected && swipeDelta.magnitude > 100f)
                 {
                     swipeDetected = true;
                     TrySwipeMove(swipeDelta);
@@ -50,11 +50,11 @@ public class LogicManager : MonoBehaviour
             }
             else if (isSwiping && touch.press.wasReleasedThisFrame)
             {
-                Vector2 swipeDelta = touchPosition - swipeStart;
+                Vector2 swipeDelta = touch.position.ReadValue() - swipeStart;
                 isSwiping = false;
-                if (!swipeDetected && swipeDelta.magnitude < 50f)
+                if (!swipeDetected && swipeDelta.magnitude < 100f)
                 {
-                    Vector3 tapWorldPos = GetWorldPosition(touchPosition);
+                    Vector3 tapWorldPos = GetWorldPosition(touch.position.ReadValue());
                     HandleTap(tapWorldPos);
                 }
             }
@@ -532,7 +532,7 @@ public class LogicManager : MonoBehaviour
 
                 if (nodePrefab != null)
                 {
-                    Vector3 position = new Vector3(x, 0, z);
+                    Vector3 position = new Vector3(x, 0.01f, z);
                     Instantiate(nodePrefab, position, Quaternion.identity);
                 }
             }
@@ -626,5 +626,30 @@ public class LogicManager : MonoBehaviour
     {
         return currentNode;
     }
+
+    private void FitPerspectiveCameraToField()
+    {
+        Camera cam = Camera.main;
+        if (cam == null) return;
+
+        float fieldWidth = width;
+        float fieldHeight = height;
+
+        Vector3 center = new Vector3((width - 1) / 2f, 0, (height - 1) / 2f);
+        cam.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+
+        float aspect = (float)Screen.width / Screen.height;
+        float fovRad = cam.fieldOfView * Mathf.Deg2Rad;
+
+        float halfFieldWidth = fieldWidth / 2f;
+        float halfFieldHeight = fieldHeight / 2f;
+
+        float distanceForHeight = halfFieldHeight / Mathf.Tan(fovRad / 2f);
+        float distanceForWidth = halfFieldWidth / (Mathf.Tan(fovRad / 2f) * aspect);
+
+        float requiredDistance = Mathf.Max(distanceForHeight, distanceForWidth);
+        cam.transform.position = center + new Vector3(0, requiredDistance, 0);
+    }
+
 }
 
