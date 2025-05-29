@@ -10,6 +10,7 @@ public class LogicManager : MonoBehaviour
     public GameObject topGoalModel;
     public GameObject bottomGoalModel;
     public GameObject soccer;
+    public GameObject field;
     private Node[,] board;
     private Node currentNode;
     public Material lineMaterial;
@@ -22,6 +23,7 @@ public class LogicManager : MonoBehaviour
 
     void Start()
     {
+        Application.targetFrameRate = 0;
         GenerateBoard(width, height);
         currentNode = board[(width - 1) / 2, (height - 1) / 2];
         FitPerspectiveCameraToField();
@@ -29,12 +31,24 @@ public class LogicManager : MonoBehaviour
 
     void Update()
     {
+        if (isGameOver)
+            return;
+
+        if (soccer != null)
+        {
+            Soccer soccerScript = soccer.GetComponent<Soccer>();
+            if (soccerScript != null && soccerScript.movingToGoal)
+                return;
+        }
+
         if (Touchscreen.current != null)
         {
             var touch = Touchscreen.current.primaryTouch;
 
             if (touch.press.wasPressedThisFrame)
             {
+                if (!IsScreenPositionOverField(touch.position.ReadValue()))
+                    return;
                 swipeStart = touch.position.ReadValue();
                 isSwiping = true;
                 swipeDetected = false;
@@ -55,12 +69,13 @@ public class LogicManager : MonoBehaviour
                 if (!swipeDetected && swipeDelta.magnitude < 100f)
                 {
                     Vector3 tapWorldPos = GetWorldPosition(touch.position.ReadValue());
-                    HandleTap(tapWorldPos);
+                    HandleTap(tapWorldPos, touch.position.ReadValue());
                 }
             }
         }
 
 #if UNITY_EDITOR
+
         if (Mouse.current != null)
         {
             if (Mouse.current.leftButton.wasPressedThisFrame)
@@ -85,15 +100,27 @@ public class LogicManager : MonoBehaviour
                 if (!swipeDetected && swipeDelta.magnitude < 50f)
                 {
                     Vector3 tapWorldPos = GetWorldPosition(Mouse.current.position.ReadValue());
-                    HandleTap(tapWorldPos);
+                    HandleTap(tapWorldPos, Mouse.current.position.ReadValue());
                 }
             }
         }
 #endif
     }
 
+    private bool IsScreenPositionOverField(Vector2 screenPosition)
+    {
+        Ray ray = Camera.main.ScreenPointToRay(screenPosition);
+        RaycastHit[] hits = Physics.RaycastAll(ray);
+        foreach (var hit in hits)
+        {
+            if (hit.collider != null && hit.collider.gameObject == field)
+                return true;
+        }
+        return false;
+    }
 
-    private void HandleTap(Vector3 tap)
+
+    private void HandleTap(Vector3 tap, Vector2 screenPosition)
     {
         int x = currentNode.position.x;
         int z = currentNode.position.y;
@@ -105,7 +132,7 @@ public class LogicManager : MonoBehaviour
         {
             GameObject goalModel = isTopGoalAdj ? topGoalModel : bottomGoalModel;
 
-            Ray ray = Camera.main.ScreenPointToRay(Input.touchCount > 0 ? (Vector3)Input.GetTouch(0).position : Input.mousePosition);
+            Ray ray = Camera.main.ScreenPointToRay(screenPosition);
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit))
             {
@@ -138,7 +165,10 @@ public class LogicManager : MonoBehaviour
                     {
                         Soccer soccerScript = soccer.GetComponent<Soccer>();
                         if (soccerScript != null)
+                        {
                             soccerScript.MoveToGoal(to);
+                        }
+
                     }
 
                     Debug.Log($"Goal reached at ({goalX}, {goalZ}) for {currentPlayer}'s Player");
@@ -169,6 +199,7 @@ public class LogicManager : MonoBehaviour
             SelectNode(new Vector3(closestNode.position.x, 0, closestNode.position.y));
         }
     }
+
 
 
     Vector3 GetWorldPosition(Vector2 screenPosition)
@@ -245,9 +276,9 @@ public class LogicManager : MonoBehaviour
         if (CheckForBlock())
         {
             Debug.Log($"Player {(currentPlayer == 1 ? "2": "1")} won");
-            Soccer soccer = this.soccer.GetComponent<Soccer>();
-            if (soccer != null)
-                soccer.MoveToGoal(to);
+            Soccer soccerScript = this.soccer.GetComponent<Soccer>();
+            if (soccerScript != null)
+                soccerScript.MoveToGoal(to);
             return;
         }
         int connectionCount = 0;

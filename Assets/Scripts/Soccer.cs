@@ -3,11 +3,10 @@ using UnityEngine;
 public class Soccer : MonoBehaviour
 {
     private LogicManager logicManager;
-    private float moveSpeed = 4.5f;
+    private float moveSpeed = 3;
     private Rigidbody rb;
-
-    private bool movingToGoal = false;
-    private Vector3 goalTarget;
+    public bool movingToGoal {get; private set; } = false;
+private Vector3 goalTarget;
 
     private void Start()
     {
