@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using TMPro;
 
 public class LogicManager : MonoBehaviour
 {
@@ -20,6 +21,11 @@ public class LogicManager : MonoBehaviour
     private Vector2 swipeStart;
     private bool isSwiping = false;
     private bool swipeDetected = false;
+
+    public float player1Time = 300f; // 5 minutes in seconds
+    public float player2Time = 300f;
+    public TMPro.TMP_Text player1TimerText; // Assign in Inspector or create in code
+    public TMPro.TMP_Text player2TimerText; // Assign in Inspector or create in code
 
     void Start()
     {
@@ -105,6 +111,31 @@ public class LogicManager : MonoBehaviour
             }
         }
 #endif
+
+        // Game timer logic
+        if (currentPlayer == 1)
+        {
+            player1Time -= Time.deltaTime;
+            if (player1Time <= 0f)
+            {
+                player1Time = 0f;
+                isGameOver = true;
+                Debug.Log("Player 2 wins by timeout!");
+                // Add your game over logic here
+            }
+        }
+        else
+        {
+            player2Time -= Time.deltaTime;
+            if (player2Time <= 0f)
+            {
+                player2Time = 0f;
+                isGameOver = true;
+                Debug.Log("Player 1 wins by timeout!");
+                // Add your game over logic here
+            }
+        }
+        UpdateTimerUI();
     }
 
     private bool IsScreenPositionOverField(Vector2 screenPosition)
@@ -682,5 +713,19 @@ public class LogicManager : MonoBehaviour
         cam.transform.position = center + new Vector3(0, requiredDistance, 0);
     }
 
+    private void UpdateTimerUI()
+    {
+        if (player1TimerText != null)
+            player1TimerText.text = FormatTime(player1Time);
+        if (player2TimerText != null)
+            player2TimerText.text = FormatTime(player2Time);
+    }
+
+    private string FormatTime(float time)
+    {
+        int minutes = Mathf.FloorToInt(time / 60f);
+        int seconds = Mathf.FloorToInt(time % 60f);
+        return string.Format("{0:00}:{1:00}", minutes, seconds);
+    }
 }
 
