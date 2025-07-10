@@ -24,8 +24,18 @@ public class LogicManager : MonoBehaviour
 
     public float player1Time = 300f; // 5 minutes in seconds
     public float player2Time = 300f;
-    public TMPro.TMP_Text player1TimerText; // Assign in Inspector or create in code
-    public TMPro.TMP_Text player2TimerText; // Assign in Inspector or create in code
+    public TMPro.TMP_Text player1TimerText;
+    public TMPro.TMP_Text player2TimerText;
+
+    private string player1Nickname = "Maks";
+    private string player2Nickname = "Karola";
+    private int player1Rating = 2100;
+    private int player2Rating = 2820;
+
+    public TMPro.TMP_Text player1NicknameText;
+    public TMPro.TMP_Text player2NicknameText;
+    public TMPro.TMP_Text player1RatingText;
+    public TMPro.TMP_Text player2RatingText;
 
     void Start()
     {
@@ -33,6 +43,7 @@ public class LogicManager : MonoBehaviour
         GenerateBoard(width, height);
         currentNode = board[(width - 1) / 2, (height - 1) / 2];
         FitPerspectiveCameraToField();
+        UpdatePlayerInfoUI();
     }
 
     void Update()
@@ -726,6 +737,18 @@ public class LogicManager : MonoBehaviour
         int minutes = Mathf.FloorToInt(time / 60f);
         int seconds = Mathf.FloorToInt(time % 60f);
         return string.Format("{0:00}:{1:00}", minutes, seconds);
+    }
+
+    private void UpdatePlayerInfoUI()
+    {
+        if (player1NicknameText != null)
+            player1NicknameText.text = player1Nickname;
+        if (player2NicknameText != null)
+            player2NicknameText.text = player2Nickname;
+        if (player1RatingText != null)
+            player1RatingText.text = player1Rating.ToString();
+        if (player2RatingText != null)
+            player2RatingText.text = player2Rating.ToString();
     }
 }
 
