@@ -722,6 +722,8 @@ public class LogicManager : MonoBehaviour
 
         float requiredDistance = Mathf.Max(distanceForHeight, distanceForWidth);
         cam.transform.position = center + new Vector3(0, requiredDistance, 0);
+
+        cam.rect = new Rect(0f, -0.2f, 1f, 1.2f);
     }
 
     private void UpdateTimerUI()
