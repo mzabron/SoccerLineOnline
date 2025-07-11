@@ -42,7 +42,6 @@ public class LogicManager : MonoBehaviour
         Application.targetFrameRate = 0;
         GenerateBoard(width, height);
         currentNode = board[(width - 1) / 2, (height - 1) / 2];
-        FitPerspectiveCameraToField();
         UpdatePlayerInfoUI();
     }
 
@@ -698,32 +697,6 @@ public class LogicManager : MonoBehaviour
     public Node GetCurrentNode()
     {
         return currentNode;
-    }
-
-    private void FitPerspectiveCameraToField()
-    {
-        Camera cam = Camera.main;
-        if (cam == null) return;
-
-        float fieldWidth = width;
-        float fieldHeight = height;
-
-        Vector3 center = new Vector3((width - 1) / 2f, 0, (height - 1) / 2f);
-        cam.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-
-        float aspect = (float)Screen.width / Screen.height;
-        float fovRad = cam.fieldOfView * Mathf.Deg2Rad;
-
-        float halfFieldWidth = fieldWidth / 2f;
-        float halfFieldHeight = fieldHeight / 2f;
-
-        float distanceForHeight = halfFieldHeight / Mathf.Tan(fovRad / 2f);
-        float distanceForWidth = halfFieldWidth / (Mathf.Tan(fovRad / 2f) * aspect);
-
-        float requiredDistance = Mathf.Max(distanceForHeight, distanceForWidth);
-        cam.transform.position = center + new Vector3(0, requiredDistance, 0);
-
-        cam.rect = new Rect(0f, -0.2f, 1f, 1.2f);
     }
 
     private void UpdateTimerUI()
