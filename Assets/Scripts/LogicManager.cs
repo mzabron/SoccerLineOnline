@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 public class LogicManager : MonoBehaviour
@@ -46,6 +47,12 @@ public class LogicManager : MonoBehaviour
         UpdatePlayerInfoUI();
     }
 
+    public void RestartGame()
+    {
+        Debug.Log("Restarting game by reloading scene...");
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
     void Update()
     {
         if (isGameOver)
@@ -58,7 +65,7 @@ public class LogicManager : MonoBehaviour
                 return;
         }
 
-        if (Touchscreen.current != null)
+        if (Touchscreen.current != null && !UIManager.IsSettingsOpen)
         {
             var touch = Touchscreen.current.primaryTouch;
 
@@ -93,7 +100,7 @@ public class LogicManager : MonoBehaviour
 
 #if UNITY_EDITOR
 
-        if (Mouse.current != null)
+        if (Mouse.current != null && !UIManager.IsSettingsOpen)
         {
             if (Mouse.current.leftButton.wasPressedThisFrame)
             {
@@ -132,7 +139,7 @@ public class LogicManager : MonoBehaviour
                 player1Time = 0f;
                 isGameOver = true;
                 Debug.Log("Player 2 wins by timeout!");
-                // Add your game over logic here
+                //game over logic here
             }
         }
         else
@@ -143,7 +150,7 @@ public class LogicManager : MonoBehaviour
                 player2Time = 0f;
                 isGameOver = true;
                 Debug.Log("Player 1 wins by timeout!");
-                // Add your game over logic here
+                //game over logic here
             }
         }
         UpdateTimerUI();
@@ -752,5 +759,7 @@ public class LogicManager : MonoBehaviour
 
         cam.rect = new Rect(0f, -0.2f, 1f, 1.2f);
     }
+
+
 }
 

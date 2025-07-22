@@ -6,7 +6,7 @@ public class Soccer : MonoBehaviour
     private float moveSpeed = 3;
     private Rigidbody rb;
     public bool movingToGoal {get; private set; } = false;
-private Vector3 goalTarget;
+    private Vector3 goalTarget;
 
     private void Start()
     {
