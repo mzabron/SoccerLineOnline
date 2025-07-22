@@ -230,8 +230,9 @@ public class LogicManager : MonoBehaviour
                         }
                     }
 
-                    SetWinner(currentPlayer); // Current player wins by goal
-                    Debug.Log($"Goal reached at ({goalX}, {goalZ}) for {currentPlayer}'s Player");
+                    // Determine winner based on which goal was scored
+                    int winner = DetermineGoalWinner(isTopGoalAdj);
+                    SetWinner(winner);
                     return;
                 }
             }
@@ -260,7 +261,20 @@ public class LogicManager : MonoBehaviour
         }
     }
 
-
+    // Determines the winner based on which goal was scored
+    // Bottom goal (z = 0) is Player 1's goal
+    // Top goal (z = 10) is Player 2's goal
+    private int DetermineGoalWinner(bool isTopGoal)
+    {
+        if (isTopGoal)
+        {
+            return 1;
+        }
+        else
+        {
+            return 2;
+        }
+    }
 
     Vector3 GetWorldPosition(Vector2 screenPosition)
     {
@@ -315,7 +329,7 @@ public class LogicManager : MonoBehaviour
             int winner = (currentPlayer == 1) ? 2 : 1; // The other player wins when current player is blocked
             SetWinner(winner);
             isGameOver = true;
-            Debug.Log($"Player {winner} won");
+
             Soccer soccerScript = this.soccer.GetComponent<Soccer>();
             if (soccerScript != null)
                 soccerScript.MoveToGoal(to);
@@ -378,9 +392,9 @@ public class LogicManager : MonoBehaviour
             {
                 if (dir == Direction.NW) return;
                 if (dir == Direction.N)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(3, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(3, goalY, goalZ), true);
                 else if (dir == Direction.NE)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ), true);
                 else
                     goto normalSwipe;
                 return;
@@ -389,9 +403,9 @@ public class LogicManager : MonoBehaviour
             {
                 if (dir == Direction.NE) return;
                 if (dir == Direction.N)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(5, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(5, goalY, goalZ), true);
                 else if (dir == Direction.NW)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ), true);
                 else
                     goto normalSwipe;
                 return;
@@ -399,11 +413,11 @@ public class LogicManager : MonoBehaviour
             else if (x == 4)
             {
                 if (dir == Direction.N)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ), true);
                 else if (dir == Direction.NW)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(3, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(3, goalY, goalZ), true);
                 else if (dir == Direction.NE)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(5, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(5, goalY, goalZ), true);
                 else
                     goto normalSwipe;
                 return;
@@ -416,9 +430,9 @@ public class LogicManager : MonoBehaviour
             {
                 if (dir == Direction.SW) return;
                 if (dir == Direction.S)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(3, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(3, goalY, goalZ), false);
                 else if (dir == Direction.SE)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ), false);
                 else
                     goto normalSwipe;
                 return;
@@ -427,9 +441,9 @@ public class LogicManager : MonoBehaviour
             {
                 if (dir == Direction.SE) return;
                 if (dir == Direction.S)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(5, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(5, goalY, goalZ), false);
                 else if (dir == Direction.SW)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ), false);
                 else
                     goto normalSwipe;
                 return;
@@ -437,11 +451,11 @@ public class LogicManager : MonoBehaviour
             else if (x == 4)
             {
                 if (dir == Direction.S)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(4, goalY, goalZ), false);
                 else if (dir == Direction.SW)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(3, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(3, goalY, goalZ), false);
                 else if (dir == Direction.SE)
-                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(5, goalY, goalZ));
+                    DrawGoalLineAndMoveSoccer(new Vector3(x, goalY, z), new Vector3(5, goalY, goalZ), false);
                 else
                     goto normalSwipe;
                 return;
@@ -466,7 +480,7 @@ public class LogicManager : MonoBehaviour
         }
     }
 
-    private void DrawGoalLineAndMoveSoccer(Vector3 from, Vector3 to)
+    private void DrawGoalLineAndMoveSoccer(Vector3 from, Vector3 to, bool isTopGoal)
     {
         DrawLine(from, to, true);
 
@@ -475,7 +489,10 @@ public class LogicManager : MonoBehaviour
             Soccer soccer = this.soccer.GetComponent<Soccer>();
             if (soccer != null)
                 soccer.MoveToGoal(to);
-            SetWinner(currentPlayer); // Current player wins by goal
+                
+            // Determine winner based on which goal was scored
+            int winner = DetermineGoalWinner(isTopGoal);
+            SetWinner(winner);
         }
     }
 
