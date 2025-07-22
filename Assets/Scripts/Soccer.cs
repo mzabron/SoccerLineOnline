@@ -5,8 +5,9 @@ public class Soccer : MonoBehaviour
     private LogicManager logicManager;
     private float moveSpeed = 3;
     private Rigidbody rb;
-    public bool movingToGoal {get; private set; } = false;
+    public bool movingToGoal { get; private set; } = false;
     private Vector3 goalTarget;
+    private MeshRenderer meshRenderer;
 
     private void Start()
     {
@@ -16,6 +17,7 @@ public class Soccer : MonoBehaviour
         }
 
         rb = GetComponent<Rigidbody>();
+        meshRenderer = GetComponent<MeshRenderer>();
     }
 
     void FixedUpdate()
@@ -30,8 +32,28 @@ public class Soccer : MonoBehaviour
             return;
         }
 
+        // Handle ball visibility
+        if (meshRenderer != null)
+        {
+            meshRenderer.enabled = UIManager.IsShowBallEnabled;
+        }
+
         if (movingToGoal)
         {
+            if (!UIManager.IsBallAnimationEnabled)
+            {
+                Vector3 newPosition = new Vector3(goalTarget.x, transform.position.y, goalTarget.z);
+                transform.position = newPosition;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.constraints = RigidbodyConstraints.FreezeAll;
+                movingToGoal = false;
+
+                if (logicManager != null)
+                    logicManager.isGameOver = true;
+                return;
+            }
+
             Vector3 dir = (goalTarget - transform.position);
             dir.y = 0;
 
@@ -60,6 +82,17 @@ public class Soccer : MonoBehaviour
             return;
 
         Vector3 targetPosition = new Vector3(currentNode.position.x, 0, currentNode.position.y);
+
+        if (!UIManager.IsBallAnimationEnabled)
+        {
+            Vector3 newPosition = new Vector3(targetPosition.x, transform.position.y, targetPosition.z);
+            transform.position = newPosition;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.constraints = RigidbodyConstraints.FreezeAll;
+            return;
+        }
+
         Vector3 direction = (targetPosition - transform.position);
         direction.y = 0;
 
@@ -76,7 +109,6 @@ public class Soccer : MonoBehaviour
             rb.position = targetPosition;
             rb.constraints = RigidbodyConstraints.FreezeAll;
         }
-
     }
 
     public void MoveToGoal(Vector3 goalPos)

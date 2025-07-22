@@ -22,6 +22,12 @@ public class LogicManager : MonoBehaviour
     private Vector2 swipeStart;
     private bool isSwiping = false;
     private bool swipeDetected = false;
+    private UIManager uiManager;
+    private bool gameOverScreenShown = false;
+
+    private int winnerPlayer = 0;
+    private string winnerNickname = "";
+    private int winnerRating = 0;
 
     public float player1Time = 300f; // 5 minutes in seconds
     public float player2Time = 300f;
@@ -44,6 +50,7 @@ public class LogicManager : MonoBehaviour
         currentNode = board[(width - 1) / 2, (height - 1) / 2];
         FitPerspectiveCameraToField();
         UpdatePlayerInfoUI();
+        uiManager = FindFirstObjectByType<UIManager>();
     }
 
     public void RestartGame()
@@ -55,7 +62,14 @@ public class LogicManager : MonoBehaviour
     void Update()
     {
         if (isGameOver)
+        {
+            if (!gameOverScreenShown && uiManager != null)
+            {
+                uiManager.ShowGameOverScreen(winnerNickname, winnerRating);
+                gameOverScreenShown = true;
+            }
             return;
+        }
 
         if (soccer != null)
         {
@@ -136,9 +150,9 @@ public class LogicManager : MonoBehaviour
             if (player1Time <= 0f)
             {
                 player1Time = 0f;
+                SetWinner(2); // Player 2 wins by timeout
                 isGameOver = true;
                 Debug.Log("Player 2 wins by timeout!");
-                //game over logic here
             }
         }
         else
@@ -147,12 +161,27 @@ public class LogicManager : MonoBehaviour
             if (player2Time <= 0f)
             {
                 player2Time = 0f;
+                SetWinner(1); // Player 1 wins by timeout
                 isGameOver = true;
                 Debug.Log("Player 1 wins by timeout!");
-                //game over logic here
             }
         }
         UpdateTimerUI();
+    }
+
+    private void SetWinner(int playerNumber)
+    {
+        winnerPlayer = playerNumber;
+        if (playerNumber == 1)
+        {
+            winnerNickname = player1Nickname;
+            winnerRating = player1Rating;
+        }
+        else
+        {
+            winnerNickname = player2Nickname;
+            winnerRating = player2Rating;
+        }
     }
 
     private bool IsScreenPositionOverField(Vector2 screenPosition)
@@ -166,7 +195,6 @@ public class LogicManager : MonoBehaviour
         }
         return false;
     }
-
 
     private void HandleTap(Vector3 tap, Vector2 screenPosition)
     {
@@ -191,23 +219,7 @@ public class LogicManager : MonoBehaviour
                     Vector3 from = new Vector3(currentNode.position.x, 0.001f, currentNode.position.y);
                     Vector3 to = new Vector3(goalX, 0.001f, goalZ);
 
-                    GameObject lineObj = new GameObject("GoalLine");
-                    var lr = lineObj.AddComponent<LineRenderer>();
-                    lr.material = lineMaterial;
-                    lr.positionCount = 2;
-                    lr.SetPosition(0, from);
-                    lr.SetPosition(1, from);
-                    lr.widthMultiplier = 0.1f;
-                    lr.useWorldSpace = true;
-                    lr.numCapVertices = 4;
-                    lr.alignment = LineAlignment.View;
-
-                    Color playerColor = (currentPlayer == 1) ? new Color32(0x6e, 0xc3, 0xff, 0xff) : new Color32(0xFF, 0x77, 0x79, 0xFF);
-                    Color baseColor = new Color32(0x3F, 0x3F, 0x3F, 0xFF);
-                    lr.material.color = playerColor;
-
-                    StartCoroutine(AnimateLine(lr, from, to, 0.25f));
-                    StartCoroutine(FadeOut(lr, playerColor, baseColor, 2f));
+                    DrawLine(from, to, true);
 
                     if (soccer != null)
                     {
@@ -216,9 +228,9 @@ public class LogicManager : MonoBehaviour
                         {
                             soccerScript.MoveToGoal(to);
                         }
-
                     }
 
+                    SetWinner(currentPlayer); // Current player wins by goal
                     Debug.Log($"Goal reached at ({goalX}, {goalZ}) for {currentPlayer}'s Player");
                     return;
                 }
@@ -288,47 +300,30 @@ public class LogicManager : MonoBehaviour
         Debug.Log($"Selected node at ({selectedNode.position.x}, {selectedNode.position.y})");
 
         // ------------------------ Drawing lines ------------------------
-
-        GameObject lineObj = new GameObject("Line");
-        var lr = lineObj.AddComponent<LineRenderer>();
-        lr.material = lineMaterial;
-        lr.positionCount = 2;
         Vector3 from = new Vector3(currentNode.position.x, 0.001f, currentNode.position.y);
         Vector3 to = new Vector3(selectedNode.position.x, 0.001f, selectedNode.position.y);
-        lr.SetPosition(0, from);
-        lr.SetPosition(1, from);
-        lr.widthMultiplier = 0.1f;
-        lr.useWorldSpace = true;
-        lr.numCapVertices = 4;
-        lr.alignment = LineAlignment.View;
 
-        Color FirstPlayerColor = new Color32(0x6e, 0xc3, 0xff, 0xff);
-        Color SecondPlayerColor = new Color32(0xFF, 0x77, 0x79, 0xFF);
-
-        Color startColor = (currentPlayer == 1) ? FirstPlayerColor : SecondPlayerColor;
-        Color baseColor = new Color32(0x3F, 0x3F, 0x3F, 0xFF);
-        lr.material.color = startColor;
-
-        StartCoroutine(AnimateLine(lr, from, to, 0.25f));
-
-        StartCoroutine(FadeOut(lr, startColor, baseColor, 2f));
+        DrawLine(from, to, false);
 
         currentNode.ConnectTo(dir.Value);
         Direction oppositeDir = DirectionUtils.GetOppositeDirection(dir.Value);
         selectedNode.ConnectTo(oppositeDir);
         currentNode = selectedNode;
 
-
-        // -------------------- Turns Logic -----------------------
-
         if (CheckForBlock())
         {
-            Debug.Log($"Player {(currentPlayer == 1 ? "2": "1")} won");
+            int winner = (currentPlayer == 1) ? 2 : 1; // The other player wins when current player is blocked
+            SetWinner(winner);
+            isGameOver = true;
+            Debug.Log($"Player {winner} won");
             Soccer soccerScript = this.soccer.GetComponent<Soccer>();
             if (soccerScript != null)
                 soccerScript.MoveToGoal(to);
             return;
         }
+
+        // -------------------- Turns Logic -----------------------
+
         int connectionCount = 0;
         foreach (bool c in selectedNode.connections)
             if (c) connectionCount++;
@@ -471,15 +466,26 @@ public class LogicManager : MonoBehaviour
         }
     }
 
-
     private void DrawGoalLineAndMoveSoccer(Vector3 from, Vector3 to)
     {
-        GameObject lineObj = new GameObject("GoalLine");
+        DrawLine(from, to, true);
+
+        if (soccer != null)
+        {
+            Soccer soccer = this.soccer.GetComponent<Soccer>();
+            if (soccer != null)
+                soccer.MoveToGoal(to);
+            SetWinner(currentPlayer); // Current player wins by goal
+        }
+    }
+
+    private void DrawLine(Vector3 from, Vector3 to, bool isGoalLine)
+    {
+        string lineName = isGoalLine ? "GoalLine" : "Line";
+        GameObject lineObj = new GameObject(lineName);
         var lr = lineObj.AddComponent<LineRenderer>();
         lr.material = lineMaterial;
         lr.positionCount = 2;
-        lr.SetPosition(0, from);
-        lr.SetPosition(1, from);
         lr.widthMultiplier = 0.1f;
         lr.useWorldSpace = true;
         lr.numCapVertices = 4;
@@ -487,25 +493,22 @@ public class LogicManager : MonoBehaviour
 
         Color playerColor = (currentPlayer == 1) ? new Color32(0x6e, 0xc3, 0xff, 0xff) : new Color32(0xFF, 0x77, 0x79, 0xFF);
         Color baseColor = new Color32(0x3F, 0x3F, 0x3F, 0xFF);
-        lr.material.color = playerColor;
 
-        StartCoroutine(AnimateLine(lr, from, to, 0.25f));
-        StartCoroutine(FadeOut(lr, playerColor, baseColor, 2f));
-
-        if (soccer != null)
+        if (UIManager.IsAnimationsEnabled)
         {
-            Soccer soccer = this.soccer.GetComponent<Soccer>();
-            if (soccer != null)
-                soccer.MoveToGoal(to);
-            Debug.Log($"Goal reached at ({to.x}, {to.z}) for Player {currentPlayer}");
+            lr.SetPosition(0, from);
+            lr.SetPosition(1, from);
+            lr.material.color = playerColor;
+
+            StartCoroutine(AnimateLine(lr, from, to, 0.25f));
+            StartCoroutine(FadeOut(lr, playerColor, baseColor, 2f));
         }
-    }
-
-
-    private void SwitchTurn()
-    {
-        currentPlayer = (currentPlayer == 1) ? 2 : 1;
-        Debug.Log($"Now it's Player {currentPlayer}'s turn!");
+        else
+        {
+            lr.SetPosition(0, from);
+            lr.SetPosition(1, to);
+            lr.material.color = baseColor;
+        }
     }
 
     private System.Collections.IEnumerator FadeOut(LineRenderer lr, Color fromColor, Color toColor, float duration)
@@ -521,7 +524,6 @@ public class LogicManager : MonoBehaviour
         }
         lr.material.color = toColor;
     }
-
 
     private System.Collections.IEnumerator AnimateLine(LineRenderer lr, Vector3 from, Vector3 to, float duration)
     {
@@ -596,6 +598,12 @@ public class LogicManager : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void SwitchTurn()
+    {
+        currentPlayer = (currentPlayer == 1) ? 2 : 1;
+        Debug.Log($"Now it's Player {currentPlayer}'s turn!");
     }
 
     void GenerateBoard(int width, int height)
@@ -699,7 +707,6 @@ public class LogicManager : MonoBehaviour
             return true;
         return false;
     }
-
 
     public Node GetCurrentNode()
     {
