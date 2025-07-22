@@ -28,10 +28,10 @@ public class LogicManager : MonoBehaviour
     public TMPro.TMP_Text player1TimerText;
     public TMPro.TMP_Text player2TimerText;
 
-    private string player1Nickname = "Maks";
-    private string player2Nickname = "Karola";
-    private int player1Rating = 2100;
-    private int player2Rating = 2820;
+    private string player1Nickname = "Player1";
+    private string player2Nickname = "Player2";
+    private int player1Rating = 2000;
+    private int player2Rating = 2000;
 
     public TMPro.TMP_Text player1NicknameText;
     public TMPro.TMP_Text player2NicknameText;
@@ -40,7 +40,6 @@ public class LogicManager : MonoBehaviour
 
     void Start()
     {
-        Application.targetFrameRate = 0;
         GenerateBoard(width, height);
         currentNode = board[(width - 1) / 2, (height - 1) / 2];
         FitPerspectiveCameraToField();
@@ -754,12 +753,21 @@ public class LogicManager : MonoBehaviour
         float distanceForHeight = halfFieldHeight / Mathf.Tan(fovRad / 2f);
         float distanceForWidth = halfFieldWidth / (Mathf.Tan(fovRad / 2f) * aspect);
 
-        float requiredDistance = Mathf.Max(distanceForHeight, distanceForWidth);
-        cam.transform.position = center + new Vector3(0, requiredDistance, 0);
+        float verticalThreshold = 4.0f;
+        float heightWhenFittingWidth = Mathf.Tan(fovRad / 2f) * distanceForWidth;
+        
+        if (heightWhenFittingWidth < (halfFieldHeight + verticalThreshold))
+        {
+            float requiredDistance = distanceForHeight + verticalThreshold;
+            cam.transform.position = center + new Vector3(0, requiredDistance, 0);
+        }
+        else
+        {
+            float requiredDistance = distanceForWidth;
+            cam.transform.position = center + new Vector3(0, requiredDistance, 0);
+        }
 
         cam.rect = new Rect(0f, -0.2f, 1f, 1.2f);
     }
-
-
 }
 
