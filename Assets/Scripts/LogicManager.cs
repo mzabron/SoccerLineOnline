@@ -26,13 +26,15 @@ public class LogicManager : MonoBehaviour
     private bool gameOverScreenShown = false;
     public bool is1TimerRunning = false;
     public bool is2TimerRunning = false;
+    public bool isPlayer1TimeLow = false;
+    public bool isPlayer2TimeLow = false;
 
     private int winnerPlayer = 0;
     private string winnerNickname = "";
     private int winnerRating = 0;
 
-    public float player1Time = 300f; // 5 minutes in seconds
-    public float player2Time = 300f;
+    private float player1Time = 60f;
+    private float player2Time = 60f;
     public TMPro.TMP_Text player1TimerText;
     public TMPro.TMP_Text player2TimerText;
 
@@ -145,7 +147,7 @@ public class LogicManager : MonoBehaviour
         }
 #endif
 
-        // Game timer logic
+        //---------------------- Game timer logic --------------------------
         if (currentPlayer == 1)
         {
             is2TimerRunning = false;
@@ -172,6 +174,10 @@ public class LogicManager : MonoBehaviour
                 Debug.Log("Player 1 wins by timeout!");
             }
         }
+
+        isPlayer1TimeLow = player1Time <= 20f;
+        isPlayer2TimeLow = player2Time <= 20f;
+
         UpdateTimerUI();
     }
 

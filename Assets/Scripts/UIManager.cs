@@ -93,7 +93,15 @@ public class UIManager : MonoBehaviour
 
         if (player1InnerColorPanel != null)
         {
-            Color panelColor = originalPlayer1PanelColor;
+            Color panelColor;
+            if (logicManager.isPlayer1TimeLow)
+            {
+                panelColor = Color.red;
+            }
+            else
+            {
+                panelColor = originalPlayer1PanelColor;
+            }
             panelColor.a = maxPanelAlpha;
             player1InnerColorPanel.color = panelColor;
         }
@@ -110,7 +118,15 @@ public class UIManager : MonoBehaviour
 
         if (player2InnerColorPanel != null)
         {
-            Color panelColor = originalPlayer2PanelColor;
+            Color panelColor;
+            if (logicManager.isPlayer2TimeLow)
+            {
+                panelColor = Color.red;
+            }
+            else
+            {
+                panelColor = originalPlayer2PanelColor;
+            }
             panelColor.a = maxPanelAlpha;
             player2InnerColorPanel.color = panelColor;
         }
@@ -127,7 +143,15 @@ public class UIManager : MonoBehaviour
 
         if (player1InnerColorPanel != null)
         {
-            Color panelColor = originalPlayer1PanelColor;
+            Color panelColor;
+            if (logicManager.isPlayer1TimeLow)
+            {
+                panelColor = Color.red;
+            }
+            else
+            {
+                panelColor = originalPlayer1PanelColor;
+            }
             panelColor.a = minPanelAlpha;
             player1InnerColorPanel.color = panelColor;
         }
@@ -144,7 +168,15 @@ public class UIManager : MonoBehaviour
 
         if (player2InnerColorPanel != null)
         {
-            Color panelColor = originalPlayer2PanelColor;
+            Color panelColor;
+            if (logicManager.isPlayer2TimeLow)
+            {
+                panelColor = Color.red;
+            }
+            else
+            {
+                panelColor = originalPlayer2PanelColor;
+            }
             panelColor.a = minPanelAlpha;
             player2InnerColorPanel.color = panelColor;
         }
