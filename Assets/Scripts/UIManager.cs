@@ -17,11 +17,29 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TMP_Text winnerMessageText;
     [SerializeField] private TMP_Text winnerRatingText;
 
+    [Header("Timer Animation Settings")]
+    [SerializeField] private float maxTextAlpha = 1f;
+    [SerializeField] private float minTextAlpha = 150f / 255f;
+    [SerializeField] private float maxPanelAlpha = 50f / 255f;
+    [SerializeField] private float minPanelAlpha = 0f;
+
+    [Header("Player 1 Components")]
+    [SerializeField] private TMP_Text player1TimerText;
+    [SerializeField] private Image player1InnerColorPanel;
+
+    [Header("Player 2 Components")]
+    [SerializeField] private TMP_Text player2TimerText;
+    [SerializeField] private Image player2InnerColorPanel;
+
     public static bool IsSettingsOpen { get; private set; } = false;
     public static bool IsAnimationsEnabled { get; private set; } = true;
     public static bool IsBallAnimationEnabled { get; private set; } = true;
     public static bool IsShowBallEnabled { get; private set; } = true;
     private LogicManager logicManager;
+    private Color originalPlayer1TextColor;
+    private Color originalPlayer1PanelColor;
+    private Color originalPlayer2TextColor;
+    private Color originalPlayer2PanelColor;
 
     void Awake()
     {
@@ -35,6 +53,107 @@ public class UIManager : MonoBehaviour
         InitializeAnimationsToggle();
         InitializeBallAnimationToggle();
         InitializeShowBallToggle();
+
+        if (player1TimerText != null)
+            originalPlayer1TextColor = player1TimerText.color;
+        if (player1InnerColorPanel != null)
+            originalPlayer1PanelColor = player1InnerColorPanel.color;
+        if (player2TimerText != null)
+            originalPlayer2TextColor = player2TimerText.color;
+        if (player2InnerColorPanel != null)
+            originalPlayer2PanelColor = player2InnerColorPanel.color;
+    }
+
+    void Update()
+    {
+        if (logicManager.is1TimerRunning)
+        {
+            SetPlayer1Active();
+            SetPlayer2ToInactive();
+        }
+        else if (logicManager.is2TimerRunning)
+        {
+            SetPlayer2Active();
+            SetPlayer1ToInactive();
+        }
+        else
+        {
+            SetAllToInactiveState();
+        }
+    }
+
+    private void SetPlayer1Active()
+    {
+        if (player1TimerText != null)
+        {
+            Color textColor = originalPlayer1TextColor;
+            textColor.a = maxTextAlpha;
+            player1TimerText.color = textColor;
+        }
+
+        if (player1InnerColorPanel != null)
+        {
+            Color panelColor = originalPlayer1PanelColor;
+            panelColor.a = maxPanelAlpha;
+            player1InnerColorPanel.color = panelColor;
+        }
+    }
+
+    private void SetPlayer2Active()
+    {
+        if (player2TimerText != null)
+        {
+            Color textColor = originalPlayer2TextColor;
+            textColor.a = maxTextAlpha;
+            player2TimerText.color = textColor;
+        }
+
+        if (player2InnerColorPanel != null)
+        {
+            Color panelColor = originalPlayer2PanelColor;
+            panelColor.a = maxPanelAlpha;
+            player2InnerColorPanel.color = panelColor;
+        }
+    }
+
+    private void SetPlayer1ToInactive()
+    {
+        if (player1TimerText != null)
+        {
+            Color textColor = originalPlayer1TextColor;
+            textColor.a = minTextAlpha;
+            player1TimerText.color = textColor;
+        }
+
+        if (player1InnerColorPanel != null)
+        {
+            Color panelColor = originalPlayer1PanelColor;
+            panelColor.a = minPanelAlpha;
+            player1InnerColorPanel.color = panelColor;
+        }
+    }
+
+    private void SetPlayer2ToInactive()
+    {
+        if (player2TimerText != null)
+        {
+            Color textColor = originalPlayer2TextColor;
+            textColor.a = minTextAlpha;
+            player2TimerText.color = textColor;
+        }
+
+        if (player2InnerColorPanel != null)
+        {
+            Color panelColor = originalPlayer2PanelColor;
+            panelColor.a = minPanelAlpha;
+            player2InnerColorPanel.color = panelColor;
+        }
+    }
+
+    private void SetAllToInactiveState()
+    {
+        SetPlayer1ToInactive();
+        SetPlayer2ToInactive();
     }
 
     private void InitializeShowBallToggle()

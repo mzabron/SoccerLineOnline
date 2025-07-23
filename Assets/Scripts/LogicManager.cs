@@ -24,6 +24,8 @@ public class LogicManager : MonoBehaviour
     private bool swipeDetected = false;
     private UIManager uiManager;
     private bool gameOverScreenShown = false;
+    public bool is1TimerRunning = false;
+    public bool is2TimerRunning = false;
 
     private int winnerPlayer = 0;
     private string winnerNickname = "";
@@ -146,6 +148,8 @@ public class LogicManager : MonoBehaviour
         // Game timer logic
         if (currentPlayer == 1)
         {
+            is2TimerRunning = false;
+            is1TimerRunning = true;
             player1Time -= Time.deltaTime;
             if (player1Time <= 0f)
             {
@@ -157,6 +161,8 @@ public class LogicManager : MonoBehaviour
         }
         else
         {
+            is1TimerRunning = false;
+            is2TimerRunning = true;
             player2Time -= Time.deltaTime;
             if (player2Time <= 0f)
             {
