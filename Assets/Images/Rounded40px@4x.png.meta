@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: f1e617cb4852da945b114792e013de5b
+guid: db37ed8929efe484d9928be32ed1cce7
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2405100050240099871
-    second: frame4_icon_0
+      213: -7164327313814668908
+    second: Rounded40px@4x_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,13 +46,13 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
-  spriteMeshType: 0
+  spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
-  spriteBorder: {x: 273, y: 422, z: 280, w: 422}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -126,23 +126,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: frame4_icon_0
+      name: Rounded40px@4x_0
       rect:
         serializedVersion: 2
-        x: 207
-        y: 357
-        width: 586
-        height: 286
+        x: 0
+        y: 0
+        width: 320
+        height: 320
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
+      border: {x: 140, y: 140, z: 140, w: 140}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1e92a204f3e5f9ed0800000000000000
-      internalID: -2405100050240099871
+      spriteID: 499b27d2442339c90800000000000000
+      internalID: -7164327313814668908
       vertices: []
       indices: 
       edges: []
@@ -151,8 +151,8 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 69f55877057012d40ad112f0d5515883
-    internalID: -1526154109
+    spriteID: ad67084f36ed6b247b911e8c25040544
+    internalID: 0
     vertices: []
     indices: 
     edges: []
@@ -161,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      frame4_icon_0: -2405100050240099871
+      Rounded40px@4x_0: -7164327313814668908
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

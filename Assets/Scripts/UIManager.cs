@@ -11,6 +11,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Toggle animationsToggle; //line drawing animation
     [SerializeField] private Toggle ballAnimationToggle;
     [SerializeField] private Toggle showBallToggle;
+    [SerializeField] private Toggle allowSwipeMoveToggle;
 
     [Header("Game Over UI")]
     [SerializeField] private GameObject gameOverCanvas;
@@ -35,6 +36,7 @@ public class UIManager : MonoBehaviour
     public static bool IsAnimationsEnabled { get; private set; } = true;
     public static bool IsBallAnimationEnabled { get; private set; } = true;
     public static bool IsShowBallEnabled { get; private set; } = true;
+    public static bool IsSwipeMoveEnabled { get; private set; } = true;
     private LogicManager logicManager;
     private Color originalPlayer1TextColor;
     private Color originalPlayer1PanelColor;
@@ -53,6 +55,7 @@ public class UIManager : MonoBehaviour
         InitializeAnimationsToggle();
         InitializeBallAnimationToggle();
         InitializeShowBallToggle();
+        InitializeAllowSwipeMoveToggle();
 
         if (player1TimerText != null)
             originalPlayer1TextColor = player1TimerText.color;
@@ -188,6 +191,22 @@ public class UIManager : MonoBehaviour
         SetPlayer2ToInactive();
     }
 
+    private void InitializeAllowSwipeMoveToggle()
+    {
+        if (allowSwipeMoveToggle == null)
+        {
+            return;
+        }
+
+        allowSwipeMoveToggle.isOn = IsSwipeMoveEnabled;
+        allowSwipeMoveToggle.onValueChanged.AddListener(OnAllowSwipeMoveToggleChanged);
+    }
+
+    private void OnAllowSwipeMoveToggleChanged(bool isEnabled)
+    {
+        IsSwipeMoveEnabled = isEnabled;
+    }
+
     private void InitializeShowBallToggle()
     {
         if (showBallToggle == null)
@@ -285,11 +304,6 @@ public class UIManager : MonoBehaviour
         {
             settingsCanva.SetActive(true);
         }
-        if (settingsButton != null)
-        {
-            settingsButton.gameObject.SetActive(false);
-        }
-
         IsSettingsOpen = true;
     }
 
@@ -333,7 +347,7 @@ public class UIManager : MonoBehaviour
 
             if (winnerMessageText != null)
             {
-                winnerMessageText.text = $"{winnerNickname} has won!";
+                winnerMessageText.text = $"{winnerNickname} won!";
             }
 
             if (winnerRatingText != null)
@@ -371,6 +385,10 @@ public class UIManager : MonoBehaviour
         if (showBallToggle != null)
         {
             showBallToggle.onValueChanged.RemoveListener(OnShowBallToggleChanged);
+        }
+        if (allowSwipeMoveToggle != null)
+        {
+            allowSwipeMoveToggle.onValueChanged.RemoveListener(OnAllowSwipeMoveToggleChanged);
         }
     }
 }

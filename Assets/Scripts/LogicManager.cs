@@ -97,7 +97,7 @@ public class LogicManager : MonoBehaviour
             else if (isSwiping && touch.press.isPressed)
             {
                 Vector2 swipeDelta = touch.position.ReadValue() - swipeStart;
-                if (!swipeDetected && swipeDelta.magnitude > 100f)
+                if (!swipeDetected && swipeDelta.magnitude > 100f && UIManager.IsSwipeMoveEnabled)
                 {
                     swipeDetected = true;
                     TrySwipeMove(swipeDelta);
@@ -128,7 +128,7 @@ public class LogicManager : MonoBehaviour
             else if (isSwiping && Mouse.current.leftButton.isPressed)
             {
                 Vector2 swipeDelta = Mouse.current.position.ReadValue() - swipeStart;
-                if (!swipeDetected && swipeDelta.magnitude > 50f)
+                if (!swipeDetected && swipeDelta.magnitude > 50f && UIManager.IsSwipeMoveEnabled)
                 {
                     swipeDetected = true;
                     TrySwipeMove(swipeDelta);
