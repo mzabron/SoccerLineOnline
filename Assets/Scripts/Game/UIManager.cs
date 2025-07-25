@@ -246,27 +246,6 @@ public class UIManager : SettingsUI
             Debug.Log("Game Over screen hidden");
         }
     }
-
-    void OnDestroy()
-    {
-        if (animationsToggle != null)
-        {
-            animationsToggle.onValueChanged.RemoveListener(OnAnimationsToggleChanged);
-        }
-        if (ballAnimationToggle != null)
-        {
-            ballAnimationToggle.onValueChanged.RemoveListener(OnBallAnimationToggleChanged);
-        }
-        if (showBallToggle != null)
-        {
-            showBallToggle.onValueChanged.RemoveListener(OnShowBallToggleChanged);
-        }
-        if (allowSwipeMoveToggle != null)
-        {
-            allowSwipeMoveToggle.onValueChanged.RemoveListener(OnAllowSwipeMoveToggleChanged);
-        }
-    }
-
     protected override void CleanupActionButton()
     {
         if (actionButton != null)
