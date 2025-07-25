@@ -470,12 +470,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fcc090bf454c2ae429cbbf580d701add, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  settingsCanva: {fileID: 84248215}
+  settingsCanvas: {fileID: 84248215}
   settingsButton: {fileID: 724750757}
+  cancelButton: {fileID: 534831630}
   animationsToggle: {fileID: 1100076562}
   ballAnimationToggle: {fileID: 1107767925}
   showBallToggle: {fileID: 616464457}
   allowSwipeMoveToggle: {fileID: 345354477}
+  actionButton: {fileID: 1389117522}
   gameOverCanvas: {fileID: 1644837353}
   winnerMessageText: {fileID: 1409994036}
   winnerRatingText: {fileID: 1189315011}

@@ -3,16 +3,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UIManager : MonoBehaviour
+public class UIManager : SettingsUI
 {
-    [Header("Settings UI")]
-    [SerializeField] private GameObject settingsCanva;
-    [SerializeField] private Button settingsButton;
-    [SerializeField] private Toggle animationsToggle; //line drawing animation
-    [SerializeField] private Toggle ballAnimationToggle;
-    [SerializeField] private Toggle showBallToggle;
-    [SerializeField] private Toggle allowSwipeMoveToggle;
-
     [Header("Game Over UI")]
     [SerializeField] private GameObject gameOverCanvas;
     [SerializeField] private TMP_Text winnerMessageText;
@@ -32,11 +24,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TMP_Text player2TimerText;
     [SerializeField] private Image player2InnerColorPanel;
 
-    public static bool IsSettingsOpen { get; private set; } = false;
-    public static bool IsAnimationsEnabled { get; private set; } = true;
-    public static bool IsBallAnimationEnabled { get; private set; } = true;
-    public static bool IsShowBallEnabled { get; private set; } = true;
-    public static bool IsSwipeMoveEnabled { get; private set; } = true;
     private LogicManager logicManager;
     private Color originalPlayer1TextColor;
     private Color originalPlayer1PanelColor;
@@ -48,14 +35,11 @@ public class UIManager : MonoBehaviour
         Application.targetFrameRate = 60;
         Debug.Log("Default frame rate set to 60 FPS on Awake");
     }
-    void Start()
+    protected override void Start()
     {
-        InitializeUI();
+        base.Start();
         logicManager = FindFirstObjectByType<LogicManager>();
-        InitializeAnimationsToggle();
-        InitializeBallAnimationToggle();
-        InitializeShowBallToggle();
-        InitializeAllowSwipeMoveToggle();
+        InitializeGameUI();
 
         if (player1TimerText != null)
             originalPlayer1TextColor = player1TimerText.color;
@@ -65,6 +49,19 @@ public class UIManager : MonoBehaviour
             originalPlayer2TextColor = player2TimerText.color;
         if (player2InnerColorPanel != null)
             originalPlayer2PanelColor = player2InnerColorPanel.color;
+    }
+
+    protected override void InitializeActionButton()
+    {
+        if (actionButton != null)
+        {
+            actionButton.onClick.AddListener(OnRestartGameButtonClick);
+            var buttonText = actionButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+            if (buttonText != null)
+            {
+                buttonText.text = "Restart";
+            }
+        }
     }
 
     void Update()
@@ -191,134 +188,12 @@ public class UIManager : MonoBehaviour
         SetPlayer2ToInactive();
     }
 
-    private void InitializeAllowSwipeMoveToggle()
+    private void InitializeGameUI()
     {
-        if (allowSwipeMoveToggle == null)
-        {
-            return;
-        }
-
-        allowSwipeMoveToggle.isOn = IsSwipeMoveEnabled;
-        allowSwipeMoveToggle.onValueChanged.AddListener(OnAllowSwipeMoveToggleChanged);
-    }
-
-    private void OnAllowSwipeMoveToggleChanged(bool isEnabled)
-    {
-        IsSwipeMoveEnabled = isEnabled;
-    }
-
-    private void InitializeShowBallToggle()
-    {
-        if (showBallToggle == null)
-        {
-            Debug.LogWarning("Show Ball Toggle is not assigned in UIManager!");
-            return;
-        }
-
-        showBallToggle.isOn = IsShowBallEnabled;
-        showBallToggle.onValueChanged.AddListener(OnShowBallToggleChanged);
-
-        Debug.Log($"Show Ball toggle initialized. Show Ball enabled: {IsShowBallEnabled}");
-    }
-
-    private void OnShowBallToggleChanged(bool isEnabled)
-    {
-        IsShowBallEnabled = isEnabled;
-
-        if (!isEnabled)
-        {
-            IsBallAnimationEnabled = false;
-            if (ballAnimationToggle != null)
-            {
-                ballAnimationToggle.isOn = false;
-                ballAnimationToggle.interactable = false;
-            }
-        }
-        else
-        {
-            if (ballAnimationToggle != null)
-            {
-                ballAnimationToggle.interactable = true;
-                ballAnimationToggle.isOn = true;
-                IsBallAnimationEnabled = true;
-            }
-        }
-
-        Debug.Log($"Show Ball {(isEnabled ? "enabled" : "disabled")}. Ball animations also {(IsBallAnimationEnabled ? "enabled" : "disabled")}");
-    }
-
-    private void InitializeBallAnimationToggle()
-    {
-        if (ballAnimationToggle == null)
-        {
-            return;
-        }
-
-        ballAnimationToggle.isOn = IsBallAnimationEnabled;
-        ballAnimationToggle.onValueChanged.AddListener(OnBallAnimationToggleChanged);
-
-        Debug.Log($"Ball animations toggle initialized. Ball animations enabled: {IsBallAnimationEnabled}");
-    }
-
-    private void OnBallAnimationToggleChanged(bool isEnabled)
-    {
-        IsBallAnimationEnabled = isEnabled;
-        Debug.Log($"Ball animations {(isEnabled ? "enabled" : "disabled")}");
-    }
-
-    private void InitializeAnimationsToggle()
-    {
-        animationsToggle.isOn = IsAnimationsEnabled;
-        animationsToggle.onValueChanged.AddListener(OnAnimationsToggleChanged);
-
-        Debug.Log($"Animations toggle initialized. Animations enabled: {IsAnimationsEnabled}");
-    }
-
-    private void OnAnimationsToggleChanged(bool isEnabled)
-    {
-        IsAnimationsEnabled = isEnabled;
-        Debug.Log($"Line animations {(isEnabled ? "enabled" : "disabled")}");
-    }
-
-    private void InitializeUI()
-    {
-        if (settingsCanva != null)
-        {
-            settingsCanva.SetActive(false);
-        }
-        if (settingsButton != null)
-        {
-            settingsButton.gameObject.SetActive(true);
-        }
         if (gameOverCanvas != null)
         {
             gameOverCanvas.SetActive(false);
         }
-
-        IsSettingsOpen = false;
-    }
-
-    public void OnSettingsButtonClick()
-    {
-        if (settingsCanva != null)
-        {
-            settingsCanva.SetActive(true);
-        }
-        IsSettingsOpen = true;
-    }
-
-    public void CloseSettings()
-    {
-        if (settingsCanva != null)
-        {
-            settingsCanva.SetActive(false);
-        }
-        if (settingsButton != null)
-        {
-            settingsButton.gameObject.SetActive(true);
-        }
-
-        IsSettingsOpen = false;
     }
 
     public void OnRestartGameButtonClick()
@@ -389,6 +264,14 @@ public class UIManager : MonoBehaviour
         if (allowSwipeMoveToggle != null)
         {
             allowSwipeMoveToggle.onValueChanged.RemoveListener(OnAllowSwipeMoveToggleChanged);
+        }
+    }
+
+    protected override void CleanupActionButton()
+    {
+        if (actionButton != null)
+        {
+            actionButton.onClick.RemoveListener(OnRestartGameButtonClick);
         }
     }
 }
