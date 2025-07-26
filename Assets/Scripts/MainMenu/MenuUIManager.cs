@@ -1,15 +1,71 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class MenuUIManager : SettingsUI
 {
     [Header("Menu Specific UI")]
-
     private bool isLoggedIn = true;
+
+    [Header("Flag Selection")]
+    [SerializeField] private GameObject flagSelectionCanvas;
+    [SerializeField] private Button flagButton;
+    [SerializeField] private Button flagCloseButton;
+
+    public static bool IsFlagSelectionOpen { get; private set; } = false;
 
     protected override void Start()
     {
         base.Start();
+        InitializeFlagSelection();
+    }
+
+    private void InitializeFlagSelection()
+    {
+        if (flagSelectionCanvas != null)
+        {
+            flagSelectionCanvas.SetActive(false);
+        }
+
+        if (flagButton != null)
+        {
+            flagButton.onClick.AddListener(OnFlagButtonClick);
+        }
+
+        if (flagCloseButton != null)
+        {
+            flagCloseButton.onClick.AddListener(OnFlagCloseButtonClick);
+        }
+
+        IsFlagSelectionOpen = false;
+    }
+
+    public void OnFlagButtonClick()
+    {
+        OpenFlagSelection();
+    }
+
+    public void OnFlagCloseButtonClick()
+    {
+        CloseFlagSelection();
+    }
+
+    public void OpenFlagSelection()
+    {
+        if (flagSelectionCanvas != null)
+        {
+            flagSelectionCanvas.SetActive(true);
+            IsFlagSelectionOpen = true;
+        }
+    }
+
+    public void CloseFlagSelection()
+    {
+        if (flagSelectionCanvas != null)
+        {
+            flagSelectionCanvas.SetActive(false);
+            IsFlagSelectionOpen = false;
+        }
     }
 
     protected override void InitializeActionButton()
@@ -98,5 +154,20 @@ public class MenuUIManager : SettingsUI
     public override void CloseSettings()
     {
         base.CloseSettings();
+    }
+
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+
+        if (flagButton != null)
+        {
+            flagButton.onClick.RemoveListener(OnFlagButtonClick);
+        }
+
+        if (flagCloseButton != null)
+        {
+            flagCloseButton.onClick.RemoveListener(OnFlagCloseButtonClick);
+        }
     }
 }
