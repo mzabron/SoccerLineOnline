@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 49aef3dfe72420e459a76e501de0b1ae
+guid: da7b4222a40a3d24ba3be087b54fab7a
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6328092196485009133
-    second: deafault_flag_0
+      213: 4010933223770773423
+    second: arrowUp_icon_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,13 +126,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: deafault_flag_0
+      name: arrowUp_icon_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1536
-        height: 1024
+        x: 290
+        y: 415
+        width: 420
+        height: 212
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +141,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: dee09653356e1d750800000000000000
-      internalID: 6328092196485009133
+      spriteID: fa75ba42482b9a730800000000000000
+      internalID: 4010933223770773423
       vertices: []
       indices: 
       edges: []
