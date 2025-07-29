@@ -34,10 +34,65 @@ public class MenuUIManager : SettingsUI
 
     public static bool IsFlagSelectionOpen { get; private set; } = false;
 
+
+    void Awake()
+    {
+        // TEMPORARY: Clear PlayerPrefs in Awake to ensure it happens before other scripts' Start()
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+    }
+
     protected override void Start()
     {
         base.Start();
         InitializeFlagSelection();
+        LoadSelectedFlag();
+    }
+
+    private void LoadSelectedFlag()
+    {
+        string savedFlagName = PlayerPrefs.GetString("SelectedFlag", "");
+        
+        if (string.IsNullOrEmpty(savedFlagName))
+        {
+            Debug.Log("No saved flag found in PlayerPrefs");
+            return;
+        }
+
+        Sprite savedFlagSprite = null;
+        Sprite[] allFlagSprites = Resources.LoadAll<Sprite>("Flags");
+        
+        foreach (Sprite sprite in allFlagSprites)
+        {
+            if (sprite.name == savedFlagName)
+            {
+                savedFlagSprite = sprite;
+                break;
+            }
+        }
+        
+        if (savedFlagSprite == null)
+        {
+            return;
+        }
+        
+        if (flagButton == null)
+        {
+            Debug.LogError("flagButton is null - cannot load saved flag!");
+            return;
+        }
+        
+        Image mainFlagImage = flagButton.GetComponent<Image>();
+        if (mainFlagImage != null)
+        {
+            mainFlagImage.sprite = savedFlagSprite;
+            mainFlagImage.preserveAspect = true;
+            Debug.Log($"Successfully loaded saved flag: {savedFlagName}");
+        }
+        else
+        {
+            Debug.LogError("Flag button does not have an Image component!");
+        }
     }
 
     private void Update()

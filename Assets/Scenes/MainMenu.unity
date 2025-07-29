@@ -912,7 +912,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 2, y: 189}
+  m_AnchoredPosition: {x: 2, y: 228}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &278833354
@@ -2238,7 +2238,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 2, y: -385}
+  m_AnchoredPosition: {x: 2, y: -345.99997}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &519795202
@@ -2652,7 +2652,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 2, y: -94}
+  m_AnchoredPosition: {x: 2, y: -54.99996}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &736487733
@@ -5286,8 +5286,9 @@ GameObject:
   - component: {fileID: 1486308486}
   - component: {fileID: 1486308488}
   - component: {fileID: 1486308487}
+  - component: {fileID: 1486308489}
   m_Layer: 5
-  m_Name: Image
+  m_Name: DoubleArrowUpImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5309,7 +5310,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 682.94006, y: 520.9999}
+  m_AnchoredPosition: {x: 666, y: 520.9999}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1486308487
@@ -5350,6 +5351,25 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1486308485}
   m_CullTransparentMesh: 1
+--- !u!114 &1486308489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1486308485}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60d3d6fb8d9e54d468d8729e798cd27c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  floatDistance: 10
+  floatSpeed: 5
+  fadeOutDuration: 0.5
+  startAnimationOnEnable: 1
+  triggerButton: {fileID: 1734160043}
+  playerPrefKey: HintDismissed
+  dismissPermanently: 1
 --- !u!1 &1502478754
 GameObject:
   m_ObjectHideFlags: 0
@@ -6479,7 +6499,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 682.94, y: 626}
+  m_AnchoredPosition: {x: 666, y: 626}
   m_SizeDelta: {x: 47.544, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1734160043
@@ -6767,6 +6787,7 @@ GameObject:
   - component: {fileID: 1807603607}
   - component: {fileID: 1807603609}
   - component: {fileID: 1807603608}
+  - component: {fileID: 1807603610}
   m_Layer: 5
   m_Name: ClickFlagText
   m_TagString: Untagged
@@ -6790,7 +6811,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 667.94006, y: 428}
+  m_AnchoredPosition: {x: 667.05994, y: 424}
   m_SizeDelta: {x: 289.9383, y: 89.567}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1807603608
@@ -6813,7 +6834,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Click to change your flag!
+  m_text: Click here to change your flag!
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 399076fd60d34ac44a8fd71c379f746a, type: 2}
   m_sharedMaterial: {fileID: 1810811539677887356, guid: 399076fd60d34ac44a8fd71c379f746a, type: 2}
@@ -6856,7 +6877,7 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_TextWrappingMode: 2
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
@@ -6892,6 +6913,25 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1807603606}
   m_CullTransparentMesh: 1
+--- !u!114 &1807603610
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1807603606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60d3d6fb8d9e54d468d8729e798cd27c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  floatDistance: 10
+  floatSpeed: 5
+  fadeOutDuration: 0.5
+  startAnimationOnEnable: 1
+  triggerButton: {fileID: 1734160043}
+  playerPrefKey: HintDismissed
+  dismissPermanently: 1
 --- !u!1 &1840343185
 GameObject:
   m_ObjectHideFlags: 0
