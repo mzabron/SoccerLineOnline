@@ -1088,7 +1088,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   inputField: {fileID: 1939910976}
   submitButton: {fileID: 1652113946}
-  pulseDuration: 0.5
+  pulseDuration: 0.75
   pulseCount: 1
   pulseColor: {r: 0.6289307, g: 0, b: 0, a: 0.49019608}
 --- !u!4 &1183726764
