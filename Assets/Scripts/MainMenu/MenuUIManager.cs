@@ -2,11 +2,16 @@
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using TMPro;
 
 public class MenuUIManager : SettingsUI
 {
     [Header("Menu Specific UI")]
     private bool isLoggedIn = true;
+
+    [Header("Player Info")]
+    [SerializeField] private TMP_Text playerNameText;
+    [SerializeField] private string defaultPlayerName = "Player";
 
     [Header("Flag Selection")]
     [SerializeField] private GameObject flagSelectionCanvas;
@@ -14,7 +19,7 @@ public class MenuUIManager : SettingsUI
     [SerializeField] private Button flagCloseButton;
     [SerializeField] private Transform flagGridParent; // Content
     [SerializeField] private GameObject flagButtonPrefab;
-    
+
     [Header("Flag Grid Settings")]
     [SerializeField] private Vector2 flagButtonSize = new Vector2(80f, 60f);
     [SerializeField] private Vector2 flagSpacing = new Vector2(10f, 10f);
@@ -34,7 +39,6 @@ public class MenuUIManager : SettingsUI
 
     public static bool IsFlagSelectionOpen { get; private set; } = false;
 
-
     void Awake()
     {
         // TEMPORARY: Clear PlayerPrefs in Awake to ensure it happens before other scripts' Start()
@@ -47,6 +51,20 @@ public class MenuUIManager : SettingsUI
         base.Start();
         InitializeFlagSelection();
         LoadSelectedFlag();
+        LoadPlayerName();
+    }
+
+    public void LoadPlayerName()
+    {
+        if (playerNameText != null)
+        {
+            string savedPlayerName = PlayerPrefs.GetString("PlayerName", defaultPlayerName);
+            playerNameText.text = savedPlayerName;
+        }
+        else
+        {
+            Debug.LogWarning("PlayerNameText is not assigned in MenuUIManager!");
+        }
     }
 
     private void LoadSelectedFlag()
@@ -81,7 +99,7 @@ public class MenuUIManager : SettingsUI
             Debug.LogError("flagButton is null - cannot load saved flag!");
             return;
         }
-        
+
         Image mainFlagImage = flagButton.GetComponent<Image>();
         if (mainFlagImage != null)
         {
@@ -105,13 +123,13 @@ public class MenuUIManager : SettingsUI
                 lastFlagButtonSize = flagButtonSize;
                 needsUpdate = true;
             }
-         
+
             if (lastFlagSpacing != flagSpacing)
             {
                 lastFlagSpacing = flagSpacing;
                 needsUpdate = true;
             }
-            
+
             if (!RectOffsetEquals(lastGridPadding, gridPadding))
             {
                 lastGridPadding = new RectOffset(gridPadding.left, gridPadding.right, gridPadding.top, gridPadding.bottom);
@@ -124,7 +142,7 @@ public class MenuUIManager : SettingsUI
                 lastPanelWidth = currentPanelWidth;
                 needsUpdate = true;
             }
-            
+
             if (needsUpdate)
             {
                 ConfigureGridLayout();
@@ -163,12 +181,12 @@ public class MenuUIManager : SettingsUI
                 break;
             }
         }
-        
+
         if (flagImage == null)
         {
             flagImage = flagButtonObj.GetComponent<Image>();
         }
-        
+
         if (flagImage != null)
         {
             RectTransform imageRect = flagImage.GetComponent<RectTransform>();
@@ -216,10 +234,10 @@ public class MenuUIManager : SettingsUI
             gridLayout = flagGridParent.GetComponent<GridLayoutGroup>();
             gridRectTransform = flagGridParent.GetComponent<RectTransform>();
         }
-        
+
         ConfigureGridLayout();
         LoadFlagIcons();
-        
+
         lastFlagButtonSize = flagButtonSize;
         lastFlagSpacing = flagSpacing;
         if (gridPadding != null)
@@ -246,12 +264,12 @@ public class MenuUIManager : SettingsUI
         float availableWidth = gridRectTransform.rect.width;
         float cellWidth = flagButtonSize.x;
         float spacingWidth = flagSpacing.x;
-        
+
         availableWidth -= (gridPadding.left + gridPadding.right);
-        
+
         int maxColumns = Mathf.FloorToInt((availableWidth + spacingWidth) / (cellWidth + spacingWidth));
         maxColumns = Mathf.Max(1, maxColumns);
-        
+
         gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
         gridLayout.constraintCount = maxColumns;
     }
@@ -306,8 +324,6 @@ public class MenuUIManager : SettingsUI
                 flagNameText.fontSize = originalFontSize * Mathf.Min(scaleFactors.x, scaleFactors.y);
                 
                 flagNameText.text = FormatFlagName(flagSprite.name);
-                
-                Debug.Log($"Set flag name text to: {FormatFlagName(flagSprite.name)} with scaled font size: {flagNameText.fontSize}");
             }
             else
             {
@@ -382,27 +398,27 @@ public class MenuUIManager : SettingsUI
                 break;
             }
         }
-        
+
         if (selectedFlagSprite == null)
         {
             Debug.LogError($"Could not find flag sprite with name: {flagName}");
             return;
         }
-        
+
         if (flagButton == null)
         {
             Debug.LogError("flagButton is null!");
             return;
         }
-        
+
         Image mainFlagImage = null;
         mainFlagImage = flagButton.GetComponent<Image>();
-        
+
         if (mainFlagImage != null)
         {
             mainFlagImage.sprite = selectedFlagSprite;
             mainFlagImage.preserveAspect = true;
-            
+
         }
 
         PlayerPrefs.SetString("SelectedFlag", flagName);
@@ -550,5 +566,10 @@ public class MenuUIManager : SettingsUI
         }
 
         ClearFlagButtons();
+    }
+
+    public void RefreshPlayerName()
+    {
+        LoadPlayerName();
     }
 }

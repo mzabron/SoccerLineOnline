@@ -29,12 +29,6 @@ public class UIManager : SettingsUI
     private Color originalPlayer1PanelColor;
     private Color originalPlayer2TextColor;
     private Color originalPlayer2PanelColor;
-
-    void Awake()
-    {
-        Application.targetFrameRate = 60;
-        Debug.Log("Default frame rate set to 60 FPS on Awake");
-    }
     protected override void Start()
     {
         base.Start();
