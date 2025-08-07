@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 
 [RequireComponent(typeof(RectTransform))]
 public class GameOverPanelAnimator : MonoBehaviour
@@ -8,8 +9,12 @@ public class GameOverPanelAnimator : MonoBehaviour
     [SerializeField] private AnimationType animationType = AnimationType.SlideFromLeft;
     [SerializeField] private float animationDuration = 0.6f;
     [SerializeField] private AnimationCurve animationCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-    [SerializeField] private bool playOnEnable = true;
+    [SerializeField] private bool playOnEnable = false;
     [SerializeField] private bool AddFadingEffect = true;
+    [SerializeField] private float delayBeforeAnimation = 0f;
+
+    [Header("Events")]
+    [SerializeField] private UnityEvent OnAnimationComplete;
 
     public enum AnimationType
     {
@@ -30,6 +35,8 @@ public class GameOverPanelAnimator : MonoBehaviour
     private bool isAnimating = false;
     private Coroutine currentAnimation;
     private bool hasBeenInitialized = false;
+
+    public bool IsAnimating => isAnimating;
 
     void Awake()
     {
@@ -119,6 +126,24 @@ public class GameOverPanelAnimator : MonoBehaviour
         currentAnimation = StartCoroutine(ShowAnimationCoroutine());
     }
 
+    public void PlayShowAnimationAfterTypewriter()
+    {
+        if (delayBeforeAnimation > 0f)
+        {
+            StartCoroutine(DelayedShowAnimation());
+        }
+        else
+        {
+            PlayShowAnimation();
+        }
+    }
+
+    private IEnumerator DelayedShowAnimation()
+    {
+        yield return new WaitForSeconds(delayBeforeAnimation);
+        PlayShowAnimation();
+    }
+
     private IEnumerator ShowAnimationCoroutine()
     {
         isAnimating = true;
@@ -164,6 +189,8 @@ public class GameOverPanelAnimator : MonoBehaviour
 
         isAnimating = false;
         currentAnimation = null;
+
+        OnAnimationComplete?.Invoke();
     }
 
     private bool ShouldAnimateAlpha()
@@ -229,7 +256,7 @@ public class GameOverPanelAnimator : MonoBehaviour
         }
         isAnimating = false;
         SetToFinalState();
-    }
 
-    public bool IsAnimating => isAnimating;
+        OnAnimationComplete?.Invoke();
+    }
 }
