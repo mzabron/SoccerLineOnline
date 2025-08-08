@@ -3072,7 +3072,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.0026169, y: 919.66565}
+  m_AnchoredPosition: {x: 0.0026245117, y: 919.66565}
   m_SizeDelta: {x: 1121.7, y: 187.5455}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &515271691
@@ -4445,6 +4445,9 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  tutorialCanvas: {fileID: 416073405}
+  tutorialNoButton: {fileID: 1610347134}
+  transitionHoldDuration: 0.5
   skipFirstLaunchCheck: 0
   mainMenuCanvas: {fileID: 1848226828}
   menuUIManager: {fileID: 747473273}
@@ -10200,7 +10203,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 0.392}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -10997,7 +11000,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 0.392}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:

@@ -21,6 +21,11 @@ public class WelcomeUIManager : MonoBehaviour
     [SerializeField] private float fadeDuration = 1f;
     [SerializeField] private AnimationCurve fadeCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
+    [Header("Tutorial Settings")]
+    [SerializeField] private GameObject tutorialCanvas;
+    [SerializeField] private Button tutorialNoButton;
+    [SerializeField] private float transitionHoldDuration = 0.5f;
+
     [Header("First Launch Settings")]
     [SerializeField] private bool skipFirstLaunchCheck = false;
 
@@ -36,6 +41,7 @@ public class WelcomeUIManager : MonoBehaviour
     private const string FIRST_LAUNCH_KEY = "HasLaunchedBefore";
 
     public bool IsWelcomeScreenActive => welcomeScreenCanvas != null && welcomeScreenCanvas.activeInHierarchy;
+    public bool IsTutorialActive => tutorialCanvas != null && tutorialCanvas.activeInHierarchy;
 
     void Awake()
     {
@@ -46,7 +52,7 @@ public class WelcomeUIManager : MonoBehaviour
     void Start()
     {
         InitializeWelcomeScreen();
-        
+
         if (IsFirstLaunch() && !skipFirstLaunchCheck)
         {
             ShowWelcomeScreen();
@@ -70,7 +76,6 @@ public class WelcomeUIManager : MonoBehaviour
 
     private void InitializeWelcomeScreen()
     {
-
         if (mainMenuCanvas != null)
         {
             mainMenuCanvas.SetActive(true);
@@ -88,7 +93,8 @@ public class WelcomeUIManager : MonoBehaviour
         }
 
         InitializeFadeCanvas();
-        
+        InitializeTutorialCanvas();
+
         if (welcomeScreenCanvas != null && (!IsFirstLaunch() || skipFirstLaunchCheck))
         {
             welcomeScreenCanvas.SetActive(false);
@@ -100,7 +106,7 @@ public class WelcomeUIManager : MonoBehaviour
         if (fadeCanvas != null)
         {
             fadeCanvas.SetActive(false);
-            
+
             if (fadeCanvasGroup == null)
             {
                 fadeCanvasGroup = fadeCanvas.GetComponent<CanvasGroup>();
@@ -120,16 +126,34 @@ public class WelcomeUIManager : MonoBehaviour
         }
     }
 
+    private void InitializeTutorialCanvas()
+    {
+        if (tutorialCanvas != null)
+        {
+            tutorialCanvas.SetActive(false);
+        }
+
+        if (tutorialNoButton != null)
+        {
+            tutorialNoButton.onClick.AddListener(OnTutorialNoButtonClick);
+        }
+    }
+
     public void ShowWelcomeScreen()
     {
         if (mainMenuCanvas != null)
         {
             mainMenuCanvas.SetActive(true);
         }
-        
+
         if (welcomeScreenCanvas != null)
         {
             welcomeScreenCanvas.SetActive(true);
+        }
+
+        if (tutorialCanvas != null)
+        {
+            tutorialCanvas.SetActive(false);
         }
 
         Debug.Log("Welcome screen activated");
@@ -141,10 +165,15 @@ public class WelcomeUIManager : MonoBehaviour
         {
             mainMenuCanvas.SetActive(true);
         }
-        
+
         if (welcomeScreenCanvas != null)
         {
             welcomeScreenCanvas.SetActive(false);
+        }
+
+        if (tutorialCanvas != null)
+        {
+            tutorialCanvas.SetActive(false);
         }
 
         if (menuUIManager != null)
@@ -153,6 +182,21 @@ public class WelcomeUIManager : MonoBehaviour
         }
 
         Debug.Log("Main menu activated");
+    }
+
+    private void ShowTutorial()
+    {
+        if (welcomeScreenCanvas != null)
+        {
+            welcomeScreenCanvas.SetActive(false);
+        }
+
+        if (tutorialCanvas != null)
+        {
+            tutorialCanvas.SetActive(true);
+        }
+
+        Debug.Log("Tutorial canvas activated");
     }
 
     private void OnSubmitButtonClick()
@@ -164,7 +208,7 @@ public class WelcomeUIManager : MonoBehaviour
             PlayerPrefs.SetString("PlayerName", inputField.text.Trim());
             MarkAsLaunched();
             PlayerPrefs.Save();
-            StartFadeTransition();
+            StartTutorialTransition();
         }
         else
         {
@@ -172,16 +216,33 @@ public class WelcomeUIManager : MonoBehaviour
         }
     }
 
-    private void StartFadeTransition()
+    private void OnTutorialNoButtonClick()
+    {
+        if (isProcessing) return;
+
+        Debug.Log("Tutorial 'No' button clicked - transitioning to main menu");
+        StartMainMenuTransition();
+    }
+
+    private void StartTutorialTransition()
     {
         if (fadeCoroutine != null)
         {
             StopCoroutine(fadeCoroutine);
         }
-        fadeCoroutine = StartCoroutine(FadeTransitionCoroutine());
+        fadeCoroutine = StartCoroutine(TutorialTransitionCoroutine());
     }
 
-    private IEnumerator FadeTransitionCoroutine()
+    private void StartMainMenuTransition()
+    {
+        if (fadeCoroutine != null)
+        {
+            StopCoroutine(fadeCoroutine);
+        }
+        fadeCoroutine = StartCoroutine(MainMenuTransitionCoroutine());
+    }
+
+    private IEnumerator TutorialTransitionCoroutine()
     {
         isProcessing = true;
 
@@ -196,16 +257,30 @@ public class WelcomeUIManager : MonoBehaviour
         }
 
         yield return StartCoroutine(FadeIn());
-        
-        if (welcomeScreenCanvas != null)
-        {
-            welcomeScreenCanvas.SetActive(false);
-        }
-        
-        yield return new WaitForSeconds(0.1f);
+
+        ShowTutorial();
+
+        yield return new WaitForSeconds(transitionHoldDuration);
         yield return StartCoroutine(FadeOut());
-        
+
         isProcessing = false;
+
+        Debug.Log("Tutorial transition completed");
+    }
+
+    private IEnumerator MainMenuTransitionCoroutine()
+    {
+        isProcessing = true;
+
+        yield return StartCoroutine(FadeIn());
+        ShowMainMenu();
+
+        yield return new WaitForSeconds(transitionHoldDuration);
+        yield return StartCoroutine(FadeOut());
+
+        isProcessing = false;
+
+        Debug.Log("Main menu transition completed");
     }
 
     private IEnumerator FadeIn()
@@ -340,10 +415,15 @@ public class WelcomeUIManager : MonoBehaviour
     void OnDestroy()
     {
         Debug.Log("WelcomeUIManager: OnDestroy called");
-        
+
         if (submitButton != null)
         {
             submitButton.onClick.RemoveListener(OnSubmitButtonClick);
+        }
+
+        if (tutorialNoButton != null)
+        {
+            tutorialNoButton.onClick.RemoveListener(OnTutorialNoButtonClick);
         }
 
         if (pulseCoroutine != null)
@@ -375,5 +455,11 @@ public class WelcomeUIManager : MonoBehaviour
     public void ForceShowMainMenu()
     {
         ShowMainMenu();
+    }
+
+    [ContextMenu("Show Tutorial")]
+    public void ForceShowTutorial()
+    {
+        ShowTutorial();
     }
 }
