@@ -33,8 +33,8 @@ public class LogicManager : MonoBehaviour
     private string winnerNickname = "";
     private int winnerRating = 0;
 
-    private float player1Time = 60f;
-    private float player2Time = 60f;
+    protected float player1Time = 60f;
+    protected float player2Time = 60f;
     public TMPro.TMP_Text player1TimerText;
     public TMPro.TMP_Text player2TimerText;
 
@@ -48,7 +48,7 @@ public class LogicManager : MonoBehaviour
     public TMPro.TMP_Text player1RatingText;
     public TMPro.TMP_Text player2RatingText;
 
-    void Start()
+    protected virtual void Start()
     {
         GenerateBoard(width, height);
         currentNode = board[(width - 1) / 2, (height - 1) / 2];
@@ -63,7 +63,7 @@ public class LogicManager : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    void Update()
+    protected virtual void Update()
     {
         if (isGameOver)
         {
