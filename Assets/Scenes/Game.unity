@@ -7485,7 +7485,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!223 &2015240747
 Canvas:
   m_ObjectHideFlags: 0
@@ -7755,12 +7755,12 @@ SceneRoots:
   - {fileID: 1587072218}
   - {fileID: 80087745}
   - {fileID: 778840825}
+  - {fileID: 183880959}
   - {fileID: 58589519}
   - {fileID: 1988079150}
   - {fileID: 1480075845}
   - {fileID: 328212301}
   - {fileID: 1374174762}
-  - {fileID: 183880959}
   - {fileID: 2015240748}
   - {fileID: 84248219}
   - {fileID: 1644837357}

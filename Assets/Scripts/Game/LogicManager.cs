@@ -38,8 +38,8 @@ public class LogicManager : MonoBehaviour
     public TMPro.TMP_Text player1TimerText;
     public TMPro.TMP_Text player2TimerText;
 
-    private string player1Nickname = "Player1";
-    private string player2Nickname = "Player2";
+    protected string player1Nickname = "Player1";
+    protected string player2Nickname = "Player2";
     private int player1Rating = 2000;
     private int player2Rating = 2000;
 
@@ -47,6 +47,8 @@ public class LogicManager : MonoBehaviour
     public TMPro.TMP_Text player2NicknameText;
     public TMPro.TMP_Text player1RatingText;
     public TMPro.TMP_Text player2RatingText;
+
+    protected bool isTutorialMode = false;
 
     protected virtual void Start()
     {
@@ -148,7 +150,10 @@ public class LogicManager : MonoBehaviour
 #endif
 
         //---------------------- Game timer logic --------------------------
-        if (currentPlayer == 1)
+
+        if (!isTutorialMode)
+        {
+            if (currentPlayer == 1)
         {
             is2TimerRunning = false;
             is1TimerRunning = true;
@@ -179,6 +184,7 @@ public class LogicManager : MonoBehaviour
         isPlayer2TimeLow = player2Time <= 20f;
 
         UpdateTimerUI();
+        }
     }
 
     private void SetWinner(int playerNumber)

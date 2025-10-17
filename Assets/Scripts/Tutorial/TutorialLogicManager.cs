@@ -1,35 +1,56 @@
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 public class TutorialLogicManager : LogicManager
 {
     [Header("Tutorial Settings")]
-    [SerializeField] private bool isTutorialMode = true;
+    [SerializeField] private GameObject descriptionPanel;
     [SerializeField] private GameObject tutorialUI;
-    
+    [SerializeField] private TMP_Text descriptionText;
+    [SerializeField] private TMP_Text titleText;
+
+    private int stepNumber = 0;
     protected override void Start()
     {
+        isTutorialMode = true;
+        player1Nickname = PlayerPrefs.GetString("PlayerName", "Player 1");
         base.Start();
-        InitializeTutorial();
+        tutorialUI.SetActive(true);
+        UpdateTutorialStep();
     }
 
     protected override void Update()
     {
-        if (isTutorialMode)
-        {
-            if (player1Time < 999f) player1Time = 999f;
-            if (player2Time < 999f) player2Time = 999f;
-        }
-        
         base.Update();
     }
-    
-    private void InitializeTutorial()
+
+    public void OnSkipNextButtonClick()
     {
-        if (tutorialUI != null)
-        {
-            tutorialUI.SetActive(true);
-        }
-        
-        Debug.Log("Tutorial initialized");
+        stepNumber++;
+        UpdateTutorialStep();
     }
+
+    public void OnSkipPreviousButtonClick()
+    {
+        if (stepNumber > 0)
+            stepNumber--;
+        UpdateTutorialStep();
+    }
+
+    void UpdateTutorialStep()
+    {
+        switch (stepNumber)
+        {
+            case 0:
+                descriptionPanel.SetActive(true);
+                titleText.text = "Welcome to the Tutorial!";
+                descriptionText.text = "Here, you will learn everything you need to start playing. You can navigate through the tutorial using the arrows. Ready to start? Tap the right arrow to begin.";
+                break;
+            default:
+                descriptionText.text = "Tutorial step not found.";
+                break;
+        }
+    }
+    
 }
