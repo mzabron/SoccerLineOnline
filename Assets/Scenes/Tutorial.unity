@@ -630,8 +630,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -2.981018, y: 66.99997}
-  m_SizeDelta: {x: -59.373413, y: 50}
+  m_AnchoredPosition: {x: -2.981018, y: 89.77656}
+  m_SizeDelta: {x: -59.3734, y: 86.8107}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &106776063
 MonoBehaviour:
@@ -681,8 +681,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 32
-  m_fontSizeBase: 32
+  m_fontSize: 35
+  m_fontSizeBase: 35
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -2130,7 +2130,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &592402233
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2465,6 +2465,7 @@ GameObject:
   - component: {fileID: 693531953}
   - component: {fileID: 693531955}
   - component: {fileID: 693531954}
+  - component: {fileID: 693531956}
   m_Layer: 5
   m_Name: DescriptionPanel
   m_TagString: Untagged
@@ -2506,7 +2507,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.8627451}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.9411765}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2531,6 +2532,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 693531952}
   m_CullTransparentMesh: 1
+--- !u!114 &693531956
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 693531952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a66d99f4a14b2ea46a5fbb5e8b1a02d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameOverPanelAnimator
+  animationType: 0
+  animationDuration: 0.6
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  playOnEnable: 1
+  AddFadingEffect: 1
+  delayBeforeAnimation: 0
+  OnAnimationComplete:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &699132531
 GameObject:
   m_ObjectHideFlags: 0
@@ -4047,6 +4092,7 @@ GameObject:
   - component: {fileID: 1146897091}
   - component: {fileID: 1146897093}
   - component: {fileID: 1146897092}
+  - component: {fileID: 1146897094}
   m_Layer: 5
   m_Name: TitleText
   m_TagString: Untagged
@@ -4172,6 +4218,30 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1146897090}
   m_CullTransparentMesh: 1
+--- !u!114 &1146897094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1146897090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e0c90ed54112704190d8b886c6526d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TypewriterAnimation
+  typeSpeed: 0.05
+  playOnStart: 1
+  showCursor: 1
+  cursorCharacter: _
+  cursorBlinkSpeed: 0.5
+  hideCursorWhenComplete: 1
+  audioSource: {fileID: 0}
+  typingSound: {fileID: 0}
+  playTypingSound: 0
+  OnTypingComplete:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1001 &1174459861
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5585,6 +5655,8 @@ MonoBehaviour:
   tutorialUI: {fileID: 592402232}
   descriptionText: {fileID: 106776063}
   titleText: {fileID: 1146897092}
+  skipNextIcon: {fileID: 0}
+  skipPreviousIcon: {fileID: 0}
 --- !u!4 &1437831911
 Transform:
   m_ObjectHideFlags: 0

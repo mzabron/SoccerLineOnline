@@ -10,6 +10,9 @@ public class TutorialLogicManager : LogicManager
     [SerializeField] private TMP_Text descriptionText;
     [SerializeField] private TMP_Text titleText;
 
+    [SerializeField] private TMP_SpriteAsset skipNextIcon;
+    [SerializeField] private TMP_SpriteAsset skipPreviousIcon;
+
     private int stepNumber = 0;
     protected override void Start()
     {
@@ -38,6 +41,7 @@ public class TutorialLogicManager : LogicManager
         UpdateTutorialStep();
     }
 
+
     void UpdateTutorialStep()
     {
         switch (stepNumber)
@@ -45,7 +49,9 @@ public class TutorialLogicManager : LogicManager
             case 0:
                 descriptionPanel.SetActive(true);
                 titleText.text = "Welcome to the Tutorial!";
-                descriptionText.text = "Here, you will learn everything you need to start playing. You can navigate through the tutorial using the arrows. Ready to start? Tap the right arrow to begin.";
+                descriptionText.text = @"Here, you will learn everything you need to start playing. " +
+                "You can navigate through the tutorial using the arrows <sprite=0> and <sprite=1> " +
+                "Ready to start? Tap the right arrow to begin.";
                 break;
             default:
                 descriptionText.text = "Tutorial step not found.";
