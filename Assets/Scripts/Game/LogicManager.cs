@@ -49,6 +49,7 @@ public class LogicManager : MonoBehaviour
     public TMPro.TMP_Text player2RatingText;
 
     protected bool isTutorialMode = false;
+    protected bool canMove = true;
 
     protected virtual void Start()
     {
@@ -84,7 +85,7 @@ public class LogicManager : MonoBehaviour
                 return;
         }
 
-        if (Touchscreen.current != null && !UIManager.IsSettingsOpen)
+        if (Touchscreen.current != null && !UIManager.IsSettingsOpen  && canMove)
         {
             var touch = Touchscreen.current.primaryTouch;
 

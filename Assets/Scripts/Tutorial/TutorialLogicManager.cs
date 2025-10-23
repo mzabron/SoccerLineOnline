@@ -1,62 +1,101 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.InputSystem;
 
 public class TutorialLogicManager : LogicManager
 {
     [Header("Tutorial Settings")]
-    [SerializeField] private GameObject descriptionPanel;
     [SerializeField] private GameObject tutorialUI;
-    [SerializeField] private TMP_Text descriptionText;
-    [SerializeField] private TMP_Text titleText;
-
-    [SerializeField] private TMP_SpriteAsset skipNextIcon;
-    [SerializeField] private TMP_SpriteAsset skipPreviousIcon;
+    [SerializeField] private Camera mainCamera;
+    [SerializeField] private TMP_Text CommandText;
+    [SerializeField] private TypewriterAnimation typewriterAnimation;
 
     private int stepNumber = 0;
+    private bool isWaitingForTypewriterComplete = false;
+    
     protected override void Start()
     {
+        canMove = false;
         isTutorialMode = true;
         player1Nickname = PlayerPrefs.GetString("PlayerName", "Player 1");
         base.Start();
         tutorialUI.SetActive(true);
-        UpdateTutorialStep();
+        AdjustCameraPosition();
+    }
+
+    private void AdjustCameraPosition()
+    {   
+        Vector3 newCameraPosition = mainCamera.transform.position;
+        newCameraPosition.z = 5.87f;
+        mainCamera.transform.position = newCameraPosition;
     }
 
     protected override void Update()
     {
         base.Update();
+
+        if (!canMove && !isWaitingForTypewriterComplete)
+        {
+            if (Touchscreen.current != null)
+            {
+                var touch = Touchscreen.current.primaryTouch;
+                if (touch.press.wasPressedThisFrame)
+                {
+                    HandleTutorialInput();
+                }
+            }
+
+#if UNITY_EDITOR || UNITY_STANDALONE
+            if (Mouse.current != null)
+            {
+                if (Mouse.current.leftButton.wasPressedThisFrame)
+                {
+                    HandleTutorialInput();
+                }
+            }
+#endif
+        }
     }
 
-    public void OnSkipNextButtonClick()
+    private void HandleTutorialInput()
     {
-        stepNumber++;
-        UpdateTutorialStep();
+        if (typewriterAnimation != null && typewriterAnimation.IsTyping)
+        {
+            typewriterAnimation.CompleteTypewriter();
+        }
+        else
+        {
+            NextTutorialStep();
+        }
     }
 
-    public void OnSkipPreviousButtonClick()
+    public void NextTutorialStep()
     {
-        if (stepNumber > 0)
-            stepNumber--;
-        UpdateTutorialStep();
-    }
-
-
-    void UpdateTutorialStep()
-    {
-        switch (stepNumber)
+        switch(stepNumber)
         {
             case 0:
-                descriptionPanel.SetActive(true);
-                titleText.text = "Welcome to the Tutorial!";
-                descriptionText.text = @"Here, you will learn everything you need to start playing. " +
-                "You can navigate through the tutorial using the arrows <sprite=0> and <sprite=1> " +
-                "Ready to start? Tap the right arrow to begin.";
+                isWaitingForTypewriterComplete = true;
+                ShowTypewriterText("Click on any adjacent node to move");
+                canMove = true;
                 break;
-            default:
-                descriptionText.text = "Tutorial step not found.";
+                
+            case 1:
+                ShowTypewriterText("Great! Now try moving to another node.");
+                break;
+                
+            case 2:
+                ShowTypewriterText("Excellent! You're learning quickly.");
                 break;
         }
     }
-    
+
+    private void ShowTypewriterText(string text)
+    {
+        if (typewriterAnimation != null)
+        {
+            typewriterAnimation.StartTypewriter(text);
+        }
+    }
+
 }
