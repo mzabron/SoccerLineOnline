@@ -9,7 +9,8 @@ public class TutorialLogicManager : LogicManager
     [SerializeField] private GameObject tutorialUI;
     [SerializeField] private Camera mainCamera;
     [SerializeField] private TMP_Text CommandText;
-    [SerializeField] private TypewriterAnimation typewriterAnimation;
+    
+    private TypewriterAnimation typewriterAnimation;
 
     private int stepNumber = 0;
     private bool isWaitingForTypewriterComplete = false;
@@ -22,6 +23,11 @@ public class TutorialLogicManager : LogicManager
         base.Start();
         tutorialUI.SetActive(true);
         AdjustCameraPosition();
+
+        if (CommandText != null)
+        {
+            typewriterAnimation = CommandText.GetComponent<TypewriterAnimation>();
+        }
     }
 
     private void AdjustCameraPosition()
@@ -77,7 +83,7 @@ public class TutorialLogicManager : LogicManager
             case 0:
                 isWaitingForTypewriterComplete = true;
                 ShowTypewriterText("Click on any adjacent node to move");
-                canMove = true;
+                //canMove = true;
                 break;
                 
             case 1:
@@ -95,7 +101,21 @@ public class TutorialLogicManager : LogicManager
         if (typewriterAnimation != null)
         {
             typewriterAnimation.StartTypewriter(text);
+
+            StartCoroutine(WaitForTypewriterComplete());
         }
     }
 
+    private System.Collections.IEnumerator WaitForTypewriterComplete()
+    {
+        while (typewriterAnimation != null && typewriterAnimation.IsTyping)
+        {
+            yield return null;
+        }
+        
+        isWaitingForTypewriterComplete = false;
+        stepNumber++;
+        
+        Debug.Log($"Typewriter complete. Step: {stepNumber}");
+    }
 }
