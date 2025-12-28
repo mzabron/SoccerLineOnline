@@ -14,7 +14,7 @@ public class LogicManager : MonoBehaviour
     public GameObject soccer;
     public GameObject field;
     private Node[,] board;
-    private Node currentNode;
+    protected Node currentNode;
     public Material lineMaterial;
     private int currentPlayer = 1; // 1 or 2
     private bool isFirstMove = true;
@@ -50,6 +50,9 @@ public class LogicManager : MonoBehaviour
 
     protected bool isTutorialMode = false;
     protected bool canMove = true;
+
+    protected bool allowSwipe = true;
+    protected bool allowTap = true;
 
     protected virtual void Start()
     {
@@ -100,7 +103,8 @@ public class LogicManager : MonoBehaviour
             else if (isSwiping && touch.press.isPressed)
             {
                 Vector2 swipeDelta = touch.position.ReadValue() - swipeStart;
-                if (!swipeDetected && swipeDelta.magnitude > 100f && UIManager.IsSwipeMoveEnabled)
+
+                if (!swipeDetected && swipeDelta.magnitude > 100f && UIManager.IsSwipeMoveEnabled && allowSwipe)
                 {
                     swipeDetected = true;
                     TrySwipeMove(swipeDelta);
@@ -110,7 +114,8 @@ public class LogicManager : MonoBehaviour
             {
                 Vector2 swipeDelta = touch.position.ReadValue() - swipeStart;
                 isSwiping = false;
-                if (!swipeDetected && swipeDelta.magnitude < 100f)
+
+                if (!swipeDetected && swipeDelta.magnitude < 100f && allowTap)
                 {
                     Vector3 tapWorldPos = GetWorldPosition(touch.position.ReadValue());
                     HandleTap(tapWorldPos, touch.position.ReadValue());
@@ -131,7 +136,7 @@ public class LogicManager : MonoBehaviour
             else if (isSwiping && Mouse.current.leftButton.isPressed)
             {
                 Vector2 swipeDelta = Mouse.current.position.ReadValue() - swipeStart;
-                if (!swipeDetected && swipeDelta.magnitude > 50f && UIManager.IsSwipeMoveEnabled)
+                if (!swipeDetected && swipeDelta.magnitude > 50f && UIManager.IsSwipeMoveEnabled && allowSwipe)
                 {
                     swipeDetected = true;
                     TrySwipeMove(swipeDelta);
@@ -141,7 +146,8 @@ public class LogicManager : MonoBehaviour
             {
                 Vector2 swipeDelta = Mouse.current.position.ReadValue() - swipeStart;
                 isSwiping = false;
-                if (!swipeDetected && swipeDelta.magnitude < 50f)
+                // 5. Add check for allowTap
+                if (!swipeDetected && swipeDelta.magnitude < 50f && allowTap)
                 {
                     Vector3 tapWorldPos = GetWorldPosition(Mouse.current.position.ReadValue());
                     HandleTap(tapWorldPos, Mouse.current.position.ReadValue());
@@ -574,7 +580,7 @@ public class LogicManager : MonoBehaviour
         lr.SetPosition(1, to);
     }
 
-    List<Node> CheckForNeighbors()
+    protected List<Node> CheckForNeighbors()
     {
         List<Node> neighbors = new List<Node>();
         Vector2Int pos = currentNode.position;
@@ -656,7 +662,7 @@ public class LogicManager : MonoBehaviour
                 if (nodePrefab != null)
                 {
                     Vector3 position = new Vector3(x, 0.01f, z);
-                    Instantiate(nodePrefab, position, Quaternion.identity);
+                    node.nodeObject = Instantiate(nodePrefab, position, Quaternion.identity);
                 }
             }
         }

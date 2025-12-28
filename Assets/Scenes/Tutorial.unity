@@ -4760,7 +4760,6 @@ MonoBehaviour:
   tutorialUI: {fileID: 592402232}
   mainCamera: {fileID: 1989196844}
   CommandText: {fileID: 217258286}
-  typewriterAnimation: {fileID: 217258288}
 --- !u!4 &1437831911
 Transform:
   m_ObjectHideFlags: 0
