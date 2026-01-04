@@ -6,17 +6,17 @@ using TMPro;
 
 public class LogicManager : MonoBehaviour
 {
-    private int width = 9;
-    private int height = 11;
+    protected int width = 9;
+    protected int height = 11;
     public GameObject nodePrefab;
     public GameObject topGoalModel;
     public GameObject bottomGoalModel;
     public GameObject soccer;
     public GameObject field;
-    private Node[,] board;
+    protected Node[,] board;
     protected Node currentNode;
     public Material lineMaterial;
-    private int currentPlayer = 1; // 1 or 2
+    protected int currentPlayer = 1; // 1 or 2
     private bool isFirstMove = true;
     public bool isGameOver = false;
     private Vector2 swipeStart;

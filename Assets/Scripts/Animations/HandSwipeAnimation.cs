@@ -31,20 +31,28 @@ public class HandSwipeAnimation : MonoBehaviour
         transform.position = startPos;
         SetAlpha(0f);
 
-        // 2. Fade In
-        yield return FadeTo(1f);
-
-        // 3. Move
+        // 2. Move and Fade In simultaneously
+        // We combine them into one loop to avoid using StartCoroutine on a just-enabled object
         float time = 0;
         while (time < moveDuration)
         {
-            transform.position = Vector3.Lerp(startPos, endPos, time / moveDuration);
             time += Time.deltaTime;
+            
+            // Move Logic
+            float moveProgress = Mathf.Clamp01(time / moveDuration);
+            transform.position = Vector3.Lerp(startPos, endPos, moveProgress);
+
+            // Fade In Logic
+            float fadeProgress = Mathf.Clamp01(time / fadeDuration);
+            SetAlpha(Mathf.Lerp(0f, 1f, fadeProgress));
+
             yield return null;
         }
+        
         transform.position = endPos;
+        SetAlpha(1f);
 
-        // 4. Fade Out
+        // 3. Fade Out (Sequential is fine here)
         yield return FadeTo(0f);
 
         gameObject.SetActive(false);

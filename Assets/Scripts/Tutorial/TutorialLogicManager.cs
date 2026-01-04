@@ -1,3 +1,4 @@
+using NUnit.Framework.Constraints;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -11,6 +12,7 @@ public class TutorialLogicManager : LogicManager
     [SerializeField] private Camera mainCamera;
     [SerializeField] private TMP_Text CommandText;
     [SerializeField] private HandSwipeAnimation handAnimation;
+    [SerializeField] private Image blackScreenPanel;
     
     private TypewriterAnimation typewriterAnimation;
 
@@ -26,6 +28,14 @@ public class TutorialLogicManager : LogicManager
     private Coroutine typewriterCoroutine;
     private Coroutine handSwipeCoroutine;
 
+    private static int tutorialCheckpoint = -1;
+    private int step8MoveCount = 0;
+
+
+    private static Vector2Int step5Target = new Vector2Int(0, 5);
+    private static Vector2Int step6Target = new Vector2Int(1, 6);
+    private static Vector2Int step7Target = new Vector2Int(2, 6);
+
     protected override void Start()
     {
         canMove = false;
@@ -38,6 +48,24 @@ public class TutorialLogicManager : LogicManager
         if (CommandText != null)
         {
             typewriterAnimation = CommandText.GetComponent<TypewriterAnimation>();
+
+            if (tutorialCheckpoint == 4)
+            {
+                stepNumber = 4;
+                tutorialCheckpoint = -1;
+                StartCoroutine(SetupJumpScenarioPostRestart());
+            }
+            else if (tutorialCheckpoint == 8)
+            {
+                stepNumber = 8;
+                tutorialCheckpoint = -1;
+                StartCoroutine(SetupStep8ScenarioPostRestart());
+            }
+            else
+            {
+                stepNumber = -1;
+                ShowTypewriterText($"Hi {player1Nickname}, you're going to learn basics. Click anywhere to continue");
+            }
         }
     }
 
@@ -56,7 +84,84 @@ public class TutorialLogicManager : LogicManager
         {
             if (currentNode != nodeBeforeMove)
             {
+                // Step 5 Logic (Boundary Bounce)
+                if (stepNumber == 5)
+                {
+                    if (IsBoundaryNode(currentNode))
+                    {
+                        // Capture Step 5 move
+                        step5Target = currentNode.position;
+
+                        // Successful bounce start: Don't stop turn, allow next move
+                        nodeBeforeMove = currentNode;
+                        StopAllNodeAnimations();
+                        
+                        nextStepAllowed = false;
+                        ShowTypewriterText("Continue your turn. Note that you can’t cross drawn or boundary lines.");
+                        return; 
+                    }
+                    else
+                    {
+                        // Failed bounce: Reset scenario to Step 4
+                        canMove = false;
+                        waitingForMove = false;
+                        StopAllNodeAnimations();
+                        StartCoroutine(ResetJumpScenario(4));
+                        return;
+                    }
+                }
+
+                // Step 8 Logic (Line Bounce)
+                if (stepNumber == 8)
+                {
+                    step8MoveCount++;
+                    
+                    int connections = 0;
+                    foreach (bool c in currentNode.connections) if (c) connections++;
+                    
+                    // Check if player can continue turn (bounce)
+                    bool canBounce = connections > 1 || IsBoundaryNode(currentNode);
+
+                    if (canBounce)
+                    {
+                        // Continue turn
+                        nodeBeforeMove = currentNode;
+                        StopAllNodeAnimations();
+                        // Show text but DO NOT advance step so we stay in Step 8 logic
+                        ShowTypewriterText("Continue your turn", false);
+                        return;
+                    }
+                    else
+                    {
+                        // Turn ended
+                        if (step8MoveCount == 1)
+                        {
+                            // Failed on first move -> Reset to Step 8
+                            canMove = false;
+                            waitingForMove = false;
+                            StopAllNodeAnimations();
+                            StartCoroutine(ResetJumpScenario(8));
+                            return;
+                        }
+                        else
+                        {
+                            // Turn ended after at least one bounce -> Success
+                            StopAllNodeAnimations();
+                            stepNumber = 9;
+                            NextTutorialStep();
+                            return;
+                        }
+                    }
+                }
+
                 savedMoveDelta = currentNode.position - nodeBeforeMove.position;
+                
+                // Capture Step 6 move (Second part of the boundary bounce)
+                if (stepNumber == 6)
+                {
+                    step6Target = currentNode.position;
+                }
+
                 canMove = false;
                 waitingForMove = false;
                 StopAllNodeAnimations();
@@ -80,7 +185,7 @@ public class TutorialLogicManager : LogicManager
                 NextTutorialStep();
             }
         }
-
+        
         if (isWaitingForTypewriterComplete || !canMove)
         {
             if (Touchscreen.current != null)
@@ -102,6 +207,39 @@ public class TutorialLogicManager : LogicManager
             }
 #endif
         }
+    }
+
+    private bool IsBoundaryNode(Node node)
+    {
+        int x = node.position.x;
+        int y = node.position.y;
+        
+        bool isBoundary = (x == 0 || x == width - 1 || y == 0 || y == height - 1);
+        
+        // Exclude corners
+        if ((x == 0 && y == 0) || 
+            (x == 0 && y == height - 1) || 
+            (x == width - 1 && y == 0) || 
+            (x == width - 1 && y == height - 1))
+            return false;
+
+        // Exclude goals
+        if ((x == 4 && y == 0) || (x == 4 && y == 10))
+            return false;
+
+        return isBoundary;
+    }
+
+    private System.Collections.IEnumerator ResetJumpScenario(int checkpoint = 4)
+    {
+        if (blackScreenPanel != null)
+        {
+            blackScreenPanel.gameObject.SetActive(true);
+            yield return StartCoroutine(FadePanel(blackScreenPanel, 0f, 1f, 0.5f));
+        }
+
+        tutorialCheckpoint = checkpoint;
+        RestartGame();
     }
 
     private void HandleTutorialInput()
@@ -144,8 +282,8 @@ public class TutorialLogicManager : LogicManager
 
                 allowTap = false;
                 allowSwipe = true;
-
-                ShowTypewriterText("Now try the swipe move by swiping your finger in one of the available directions.");
+                isWaitingForTypewriterComplete = true;
+                ShowTypewriterText("Now try the swipe move by swiping your finger in one of the available directions");
                 
                 nodeBeforeMove = currentNode;
                 waitingForMove = true;
@@ -155,10 +293,220 @@ public class TutorialLogicManager : LogicManager
                     handSwipeCoroutine = StartCoroutine(HandSwipeLoop());
                 }
                 break;
+
+            case 3:
+                allowSwipe = true;
+                allowTap = true;
+                nextStepAllowed = true;
+                isWaitingForTypewriterComplete = true;
+                ShowTypewriterText("Excellent! Now you're going to learn about jumps. Tap anywhere to continue");
+                break;
+
+            case 4:
+                StartCoroutine(SetupJumpScenario());
+                break;
+
+            //case 5 is implemented in Update() method when waiting for move
+
+            case 6:
+                nextStepAllowed = true;
+                isWaitingForTypewriterComplete = true;
+                ShowTypewriterText("Good job! You can also bounce off existing lines. Tap anywhere to end your turn");
+                break;
+
+            case 7:
+                nextStepAllowed = false;
+                isWaitingForTypewriterComplete = true;
+                ShowTypewriterText("Waiting for oponnent's move...");
+                StartCoroutine(OpponentMoveRoutine());
+                break;
+
+            case 8:
+                step8MoveCount = 0; // Reset counter for this step
+                nextStepAllowed = false;
+                isWaitingForTypewriterComplete = true;
+                // Pass false to NOT advance step number, keeping it at 8 for the Update logic
+                ShowTypewriterText("Now try bouncing off one of the already drawn lines", false);
+                waitingForMove = true; 
+                nodeBeforeMove = currentNode;
+                break;
+
+            case 9:
+                isWaitingForTypewriterComplete = true;
+                ShowTypewriterText("GJ!");
+                break;
         }
     }
 
-    private void ShowTypewriterText(string text)
+    private System.Collections.IEnumerator SetupJumpScenario()
+    {
+        // Fade Out
+        if (blackScreenPanel != null)
+        {
+            blackScreenPanel.gameObject.SetActive(true);
+            yield return StartCoroutine(FadePanel(blackScreenPanel, 0f, 1f, 0.5f));
+        }
+
+        tutorialCheckpoint = 4;
+        RestartGame();
+    }
+
+    private System.Collections.IEnumerator SetupJumpScenarioPostRestart()
+    {
+        allowSwipe = false;
+        allowTap = false;
+        // Ensure screen is black initially after reload
+        if (blackScreenPanel != null)
+        {
+            blackScreenPanel.gameObject.SetActive(true);
+            Color c = blackScreenPanel.color;
+            c.a = 1f;
+            blackScreenPanel.color = c;
+        }
+
+        isTutorialMode = true;
+        
+        yield return new WaitForSeconds(0.1f);
+
+        canMove = true;
+        SelectNode(new Vector3(3, 0, 5));
+        yield return new WaitForSeconds(0.2f);
+        
+        canMove = true;
+        SelectNode(new Vector3(2, 0, 5));
+        yield return new WaitForSeconds(0.2f);
+
+        canMove = true;
+        SelectNode(new Vector3(1, 0, 5));
+        yield return new WaitForSeconds(0.2f);
+
+        currentPlayer = 1;
+
+        // Fade In
+        if (blackScreenPanel != null)
+        {
+            yield return StartCoroutine(FadePanel(blackScreenPanel, 1f, 0f, 0.5f));
+            blackScreenPanel.gameObject.SetActive(false);
+        }
+
+        allowSwipe = true;
+        allowTap = true;
+        nextStepAllowed = true;
+        isWaitingForTypewriterComplete = true;
+        
+        HighlightBoundaryNodes();
+
+        ShowTypewriterText("Landing on one of the highlighted boundary node requires a bounce and an extra move. Try it!");
+
+        nodeBeforeMove = currentNode;
+        waitingForMove = true;
+    }
+
+    private System.Collections.IEnumerator SetupStep8ScenarioPostRestart()
+    {
+        // Ensure screen is black initially after reload
+        if (blackScreenPanel != null)
+        {
+            blackScreenPanel.gameObject.SetActive(true);
+            Color c = blackScreenPanel.color;
+            c.a = 1f;
+            blackScreenPanel.color = c;
+        }
+
+        isTutorialMode = true;
+        yield return new WaitForSeconds(0.1f);
+
+        // Replay moves to restore state up to Step 8
+        canMove = true;
+        
+        // Step 4 moves (Setup)
+        SelectNode(new Vector3(3, 0, 5)); yield return new WaitForSeconds(0.1f);
+        SelectNode(new Vector3(2, 0, 5)); yield return new WaitForSeconds(0.1f);
+        SelectNode(new Vector3(1, 0, 5)); yield return new WaitForSeconds(0.1f);
+        
+        // Step 5 & 6 moves (Replay player's boundary bounce)
+        SelectNode(new Vector3(step5Target.x, 0, step5Target.y)); yield return new WaitForSeconds(0.1f);
+        SelectNode(new Vector3(step6Target.x, 0, step6Target.y)); yield return new WaitForSeconds(0.1f);
+        
+        // Step 7 Opponent move (Replay opponent's move)
+        SelectNode(new Vector3(step7Target.x, 0, step7Target.y)); yield return new WaitForSeconds(0.1f);
+
+        currentPlayer = 1;
+
+        // Fade In
+        if (blackScreenPanel != null)
+        {
+            yield return StartCoroutine(FadePanel(blackScreenPanel, 1f, 0f, 0.5f));
+            blackScreenPanel.gameObject.SetActive(false);
+        }
+
+        // Initialize Step 8
+        step8MoveCount = 0;
+        nextStepAllowed = false;
+        isWaitingForTypewriterComplete = true;
+        ShowTypewriterText("Now try bouncing off one of the already drawn lines", false);
+        waitingForMove = true; 
+        nodeBeforeMove = currentNode;
+    }
+
+    private void HighlightBoundaryNodes()
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                bool isBoundary = (x == 0 || x == width - 1 || y == 0 || y == height - 1);
+                if (!isBoundary) continue;
+
+                // Exclude corners
+                if ((x == 0 && y == 0) || 
+                    (x == 0 && y == height - 1) || 
+                    (x == width - 1 && y == 0) || 
+                    (x == width - 1 && y == height - 1))
+                    continue;
+
+                // Exclude mid-goal nodes (4,0) and (4,10)
+                if ((x == 4 && y == 0) || (x == 4 && y == 10))
+                    continue;
+
+                Node node = board[x, y];
+                if (node != null && node.nodeObject != null)
+                {
+                    PulseAnimation anim = node.nodeObject.GetComponent<PulseAnimation>();
+                    if (anim == null)
+                    {
+                        anim = node.nodeObject.AddComponent<PulseAnimation>();
+                    }
+                    anim.StartPulsing();
+                    activeAnimations.Add(anim);
+                }
+            }
+        }
+    }
+
+    private System.Collections.IEnumerator FadePanel(Image panel, float startAlpha, float endAlpha, float duration)
+    {
+        float elapsed = 0f;
+        Color startColor = panel.color;
+        startColor.a = startAlpha;
+        panel.color = startColor;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float alpha = Mathf.Lerp(startAlpha, endAlpha, elapsed / duration);
+            Color newColor = panel.color;
+            newColor.a = alpha;
+            panel.color = newColor;
+            yield return null;
+        }
+
+        Color finalColor = panel.color;
+        finalColor.a = endAlpha;
+        panel.color = finalColor;
+    }
+
+    private void ShowTypewriterText(string text, bool advanceStep = true)
     {
         // 1. Disable movement immediately when text starts
         canMove = false;
@@ -168,11 +516,11 @@ public class TutorialLogicManager : LogicManager
             typewriterAnimation.StartTypewriter(text);
 
             if (typewriterCoroutine != null) StopCoroutine(typewriterCoroutine);
-            typewriterCoroutine = StartCoroutine(WaitForTypewriterComplete());
+            typewriterCoroutine = StartCoroutine(WaitForTypewriterComplete(advanceStep));
         }
     }
 
-    private System.Collections.IEnumerator WaitForTypewriterComplete()
+    private System.Collections.IEnumerator WaitForTypewriterComplete(bool advanceStep)
     {
         while (typewriterAnimation != null && typewriterAnimation.IsTyping)
         {
@@ -180,11 +528,25 @@ public class TutorialLogicManager : LogicManager
         }
         
         isWaitingForTypewriterComplete = false;
-        stepNumber++;
         
-        int finishedStepIndex = stepNumber - 1;
+        if (advanceStep)
+        {
+            stepNumber++;
+        }
+        
+        // Logic to re-enable movement based on step
+        // If we advanced step, we check the finished step (stepNumber - 1)
+        // If we didn't advance (Step 8 loop), we check current stepNumber
+        
+        bool shouldEnableMove = false;
+        int checkStep = advanceStep ? stepNumber - 1 : stepNumber;
 
-        if (finishedStepIndex == 0 || finishedStepIndex == 2)
+        if (checkStep == 0 || checkStep == 2 || checkStep == 4 || checkStep == 5 || checkStep == 8)
+        {
+            shouldEnableMove = true;
+        }
+        
+        if (shouldEnableMove)
         {
             canMove = true;
         }
@@ -194,6 +556,8 @@ public class TutorialLogicManager : LogicManager
 
     private System.Collections.IEnumerator HandSwipeLoop()
     {
+
+        
         Vector3 centerPos = new Vector3(5, 0, 4);
         float swipeDistance = 3.0f;
 
@@ -267,8 +631,33 @@ public class TutorialLogicManager : LogicManager
 
         yield return new WaitForSeconds(1.5f);
 
-        Vector2Int targetPos = currentNode.position + savedMoveDelta;
-        Vector3 targetWorldPos = new Vector3(targetPos.x, 0, targetPos.y);
+        Vector3 targetWorldPos;
+
+        // Step 7 logic (stepNumber is 8 here because WaitForTypewriterComplete increments it)
+        if (stepNumber == 8)
+        {
+            Vector2Int currentPos = currentNode.position;
+            Vector2Int targetPos = currentPos;
+
+            if ((currentPos.x == 1 && currentPos.y == 6) || (currentPos.x == 1 && currentPos.y == 7))
+            {
+                targetPos = new Vector2Int(2, 6);
+            }
+            else if ((currentPos.x == 1 && currentPos.y == 4) || (currentPos.x == 1 && currentPos.y == 3))
+            {
+                targetPos = new Vector2Int(2, 4);
+            }
+            
+            step7Target = targetPos; // Capture Step 7 move
+            targetWorldPos = new Vector3(targetPos.x, 0, targetPos.y);
+        }
+        else
+        {
+            // Default logic for Step 1
+            Vector2Int targetPos = currentNode.position + savedMoveDelta;
+            targetWorldPos = new Vector3(targetPos.x, 0, targetPos.y);
+        }
+
         SelectNode(targetWorldPos);
 
         yield return new WaitForSeconds(1.5f);
