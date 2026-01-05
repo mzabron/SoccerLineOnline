@@ -1307,7 +1307,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e0c90ed54112704190d8b886c6526d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TypewriterAnimation
-  typeSpeed: 0.05
+  typeSpeed: 0.03
   playOnStart: 1
   showCursor: 1
   cursorCharacter: _
