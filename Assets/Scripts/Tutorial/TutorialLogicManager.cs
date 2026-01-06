@@ -14,7 +14,7 @@ public class TutorialLogicManager : LogicManager
     [SerializeField] private TMP_Text CommandText;
     [SerializeField] private HandSwipeAnimation handAnimation;
     [SerializeField] private Image blackScreenPanel;
-    
+
     private TypewriterAnimation typewriterAnimation;
 
     private int stepNumber = 0;
@@ -26,7 +26,7 @@ public class TutorialLogicManager : LogicManager
     private bool nextStepAllowed = true;
     private Node nodeBeforeMove;
     private Vector2Int savedMoveDelta;
-    
+
     private Coroutine typewriterCoroutine;
     private Coroutine handSwipeCoroutine;
 
@@ -56,7 +56,7 @@ public class TutorialLogicManager : LogicManager
                 stepNumber = 4;
                 tutorialCheckpoint = -1;
                 // Prevent input from triggering NextTutorialStep immediately during reload
-                nextStepAllowed = false; 
+                nextStepAllowed = false;
                 StartCoroutine(SetupJumpScenarioPostRestart());
             }
             else if (tutorialCheckpoint == 8)
@@ -73,6 +73,13 @@ public class TutorialLogicManager : LogicManager
                 nextStepAllowed = false;
                 StartCoroutine(SetupCase10ScenarioPostRestart());
             }
+            else if (tutorialCheckpoint == 12)
+            {
+                stepNumber = 12;
+                tutorialCheckpoint = -1;
+                nextStepAllowed = false;
+                StartCoroutine(SetupCase12ScenarioPostRestart());
+            }
             else
             {
                 stepNumber = -1;
@@ -82,7 +89,7 @@ public class TutorialLogicManager : LogicManager
     }
 
     private void AdjustCameraPosition()
-    {   
+    {
         Vector3 newCameraPosition = mainCamera.transform.position;
         newCameraPosition.z = 5.87f;
         mainCamera.transform.position = newCameraPosition;
@@ -92,9 +99,23 @@ public class TutorialLogicManager : LogicManager
     {
         // Suppress Game Over logic from base class during scenario setup (step 10) and completion (step 11).
         // The tutorial simulates a stuck state, but we don't want the actual Game Over UI.
+
         if ((stepNumber == 10 || stepNumber == 11) && isGameOver)
         {
             isGameOver = false;
+        }
+
+
+        if (stepNumber == 12 && isGameOver)
+        {
+            isGameOver = false;
+            stepNumber = 13;
+            StopAllNodeAnimations();
+            StopAllEdgeAnimations();
+            waitingForMove = false;
+            canMove = false;
+            NextTutorialStep();
+            return;
         }
 
         base.Update();
@@ -114,10 +135,10 @@ public class TutorialLogicManager : LogicManager
                         // Successful bounce start: Don't stop turn, allow next move
                         nodeBeforeMove = currentNode;
                         StopAllNodeAnimations();
-                        
+
                         nextStepAllowed = false;
                         ShowTypewriterText("Continue your turn. Note that you can't cross drawn or boundary lines.");
-                        return; 
+                        return;
                     }
                     else
                     {
@@ -134,10 +155,10 @@ public class TutorialLogicManager : LogicManager
                 if (stepNumber == 8)
                 {
                     step8MoveCount++;
-                    
+
                     int connections = 0;
                     foreach (bool c in currentNode.connections) if (c) connections++;
-                    
+
                     // Check if player can continue turn (bounce)
                     bool canBounce = connections > 1 || IsBoundaryNode(currentNode);
 
@@ -173,8 +194,32 @@ public class TutorialLogicManager : LogicManager
                     }
                 }
 
+
+
+
+                if (stepNumber == 12)
+                {
+
+                    canMove = false;
+                    waitingForMove = false;
+                    StopAllNodeAnimations();
+                    
+                    if (isGameOver)
+                    {
+
+                        isGameOver = false;
+                        stepNumber = 13;
+                    }
+                    else
+                    {
+
+                        StartCoroutine(CheckStep12Result());
+                        return;
+                    }
+                }
+
                 savedMoveDelta = currentNode.position - nodeBeforeMove.position;
-                
+
                 // Capture Step 6 move (Second part of the boundary bounce)
                 if (stepNumber == 6)
                 {
@@ -185,14 +230,14 @@ public class TutorialLogicManager : LogicManager
                 waitingForMove = false;
                 StopAllNodeAnimations();
                 StopAllEdgeAnimations();
-                
+
                 if (handSwipeCoroutine != null)
                 {
                     StopCoroutine(handSwipeCoroutine);
                     if (handAnimation != null) handAnimation.Hide();
                 }
 
-                if (typewriterCoroutine != null) 
+                if (typewriterCoroutine != null)
                 {
                     StopCoroutine(typewriterCoroutine);
                 }
@@ -205,9 +250,10 @@ public class TutorialLogicManager : LogicManager
                 NextTutorialStep();
             }
         }
-        
+
         if (isWaitingForTypewriterComplete || !canMove)
         {
+
             if (Touchscreen.current != null)
             {
                 var touch = Touchscreen.current.primaryTouch;
@@ -229,17 +275,28 @@ public class TutorialLogicManager : LogicManager
         }
     }
 
+
+    private System.Collections.IEnumerator CheckStep12Result()
+    {
+        yield return null;
+        
+        if (stepNumber == 12 && !isGameOver)
+        {
+            StartCoroutine(ResetJumpScenario(12));
+        }
+    }
+
     private bool IsBoundaryNode(Node node)
     {
         int x = node.position.x;
         int y = node.position.y;
-        
+
         bool isBoundary = (x == 0 || x == width - 1 || y == 0 || y == height - 1);
-        
+
         // Exclude corners
-        if ((x == 0 && y == 0) || 
-            (x == 0 && y == height - 1) || 
-            (x == width - 1 && y == 0) || 
+        if ((x == 0 && y == 0) ||
+            (x == 0 && y == height - 1) ||
+            (x == width - 1 && y == 0) ||
             (x == width - 1 && y == height - 1))
             return false;
 
@@ -367,7 +424,7 @@ public class TutorialLogicManager : LogicManager
                 {
                     SelectNode(new Vector3(8, 0, 5));
                 }
-                
+
                 // Immediately reset game over trigger so the visual UI does not appear
                 isGameOver = false;
 
@@ -382,12 +439,27 @@ public class TutorialLogicManager : LogicManager
                 break;
 
             case 12:
+                StartCoroutine(SetupCase12Scenario());
+                break;
+
+            case 13:
                 isWaitingForTypewriterComplete = true;
-                ShowTypewriterText("Congratulations! ");
+                ShowTypewriterText("Congratulations! You've completed the tutorial. Good luck!");
                 break;
 
         }
 
+    }
+
+    private System.Collections.IEnumerator SetupCase12Scenario()
+    { 
+        if (blackScreenPanel != null)
+        {
+            blackScreenPanel.gameObject.SetActive(true);
+            yield return StartCoroutine(FadePanel(blackScreenPanel, 0f, 1f, 0.5f));
+        }
+        tutorialCheckpoint = 12;
+        RestartGame();
     }
 
     private System.Collections.IEnumerator SetupCase10Scenario()
@@ -401,6 +473,50 @@ public class TutorialLogicManager : LogicManager
 
         tutorialCheckpoint = 10;
         RestartGame();
+    }
+
+    private System.Collections.IEnumerator SetupCase12ScenarioPostRestart()
+    {
+        allowSwipe = false;
+        allowTap = false;
+
+
+        if (blackScreenPanel != null)
+        {
+            blackScreenPanel.gameObject.SetActive(true);
+            Color c = blackScreenPanel.color;
+            c.a = 1f;
+            blackScreenPanel.color = c;
+        }
+
+        isTutorialMode = true;
+        yield return new WaitForSeconds(0.1f);
+
+        SelectNode(new Vector3(4, 0, 6)); yield return new WaitForSeconds(0.1f);
+        SelectNode(new Vector3(4, 0, 7)); yield return new WaitForSeconds(0.1f);
+        SelectNode(new Vector3(4, 0, 8)); yield return new WaitForSeconds(0.1f);
+        SelectNode(new Vector3(4, 0, 9)); yield return new WaitForSeconds(0.1f);
+        SelectNode(new Vector3(4, 0, 10)); yield return new WaitForSeconds(0.1f);
+
+        currentPlayer = 1;
+
+        if (blackScreenPanel != null)
+        {
+            yield return StartCoroutine(FadePanel(blackScreenPanel, 1f, 0f, 0.5f));
+            blackScreenPanel.gameObject.SetActive(false);
+        }
+
+        currentPlayer = 1;
+        allowSwipe = true;
+        allowTap = true;
+        nextStepAllowed = false;
+        isWaitingForTypewriterComplete = true;
+
+        ShowTypewriterText("Ready to score? Swipe toward the opponent's goal or tap on it to win the game.", false);
+
+        canMove = true;
+        nodeBeforeMove = currentNode;
+        waitingForMove = true;
     }
 
     private System.Collections.IEnumerator SetupCase10ScenarioPostRestart()
