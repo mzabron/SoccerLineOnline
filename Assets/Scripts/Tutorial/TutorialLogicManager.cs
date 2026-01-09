@@ -1,9 +1,11 @@
+using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using System.Collections.Generic;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 public class TutorialLogicManager : LogicManager
@@ -55,7 +57,6 @@ public class TutorialLogicManager : LogicManager
             {
                 stepNumber = 4;
                 tutorialCheckpoint = -1;
-                // Prevent input from triggering NextTutorialStep immediately during reload
                 nextStepAllowed = false;
                 StartCoroutine(SetupJumpScenarioPostRestart());
             }
@@ -80,10 +81,18 @@ public class TutorialLogicManager : LogicManager
                 nextStepAllowed = false;
                 StartCoroutine(SetupCase12ScenarioPostRestart());
             }
+            // Add Start checkpoint for Case 14
+            else if (tutorialCheckpoint == 14)
+            {
+                stepNumber = 14;
+                tutorialCheckpoint = -1;
+                nextStepAllowed = false;
+                StartCoroutine(SetupCase14ScenarioPostRestart());
+            }
             else
             {
                 stepNumber = -1;
-                ShowTypewriterText($"Hi {player1Nickname}, you're going to learn basics. Click anywhere to continue");
+                ShowTypewriterText($"Hi {player1Nickname}, you're going to learn basics. Click anywhere to continue.");
             }
         }
     }
@@ -97,19 +106,21 @@ public class TutorialLogicManager : LogicManager
 
     protected override void Update()
     {
-        // Suppress Game Over logic from base class during scenario setup (step 10) and completion (step 11).
-        // The tutorial simulates a stuck state, but we don't want the actual Game Over UI.
+        base.Update();
+        bool isGoalScored = soccer != null && soccer.transform.position.z > 10.2f;
 
-        if ((stepNumber == 10 || stepNumber == 11) && isGameOver)
+        // Step 12 Win Logic
+        if (stepNumber == 12 && isGoalScored)
         {
-            isGameOver = false;
+            stepNumber = 13;
+            NextTutorialStep();
         }
 
+        // --- STEP 14 WIN LOGIC ---
 
-        if (stepNumber == 12 && isGameOver)
+        if (stepNumber == 14 && isGoalScored && canMove)
         {
-            isGameOver = false;
-            stepNumber = 13;
+            stepNumber = 15;
             StopAllNodeAnimations();
             StopAllEdgeAnimations();
             waitingForMove = false;
@@ -117,8 +128,6 @@ public class TutorialLogicManager : LogicManager
             NextTutorialStep();
             return;
         }
-
-        base.Update();
 
         if (waitingForMove)
         {
@@ -129,20 +138,16 @@ public class TutorialLogicManager : LogicManager
                 {
                     if (IsBoundaryNode(currentNode))
                     {
-                        // Capture Step 5 move
                         step5Target = currentNode.position;
-
-                        // Successful bounce start: Don't stop turn, allow next move
                         nodeBeforeMove = currentNode;
                         StopAllNodeAnimations();
-
                         nextStepAllowed = false;
-                        ShowTypewriterText("Continue your turn. Note that you can't cross drawn or boundary lines.");
+                        ShowTypewriterText("Continue your turn. Note that you can't cross drawn or highlighted boundary lines.");
+                        HighlightBoundaryEdges();
                         return;
                     }
                     else
                     {
-                        // Failed bounce: Reset scenario to Step 4
                         canMove = false;
                         waitingForMove = false;
                         StopAllNodeAnimations();
@@ -155,28 +160,21 @@ public class TutorialLogicManager : LogicManager
                 if (stepNumber == 8)
                 {
                     step8MoveCount++;
-
                     int connections = 0;
                     foreach (bool c in currentNode.connections) if (c) connections++;
-
-                    // Check if player can continue turn (bounce)
                     bool canBounce = connections > 1 || IsBoundaryNode(currentNode);
 
                     if (canBounce)
                     {
-                        // Continue turn
                         nodeBeforeMove = currentNode;
                         StopAllNodeAnimations();
-                        // Show text but DO NOT advance step so we stay in Step 8 logic
                         ShowTypewriterText("Continue your turn", false);
                         return;
                     }
                     else
                     {
-                        // Turn ended
                         if (step8MoveCount == 1)
                         {
-                            // Failed on first move -> Reset to Step 8
                             canMove = false;
                             waitingForMove = false;
                             StopAllNodeAnimations();
@@ -185,7 +183,6 @@ public class TutorialLogicManager : LogicManager
                         }
                         else
                         {
-                            // Turn ended after at least one bounce -> Success
                             StopAllNodeAnimations();
                             stepNumber = 9;
                             NextTutorialStep();
@@ -194,33 +191,42 @@ public class TutorialLogicManager : LogicManager
                     }
                 }
 
-
-
-
                 if (stepNumber == 12)
                 {
-
                     canMove = false;
                     waitingForMove = false;
                     StopAllNodeAnimations();
                     
-                    if (isGameOver)
+                    if (!isGoalScored)
                     {
-
-                        isGameOver = false;
-                        stepNumber = 13;
-                    }
-                    else
-                    {
-
                         StartCoroutine(CheckStep12Result());
                         return;
                     }
                 }
 
+                // --- STEP 14 LOST TURN LOGIC ---
+                if (stepNumber == 14)
+                {
+                    // If currentPlayer switched to 2, Player 1 lost the turn -> Restart
+                    if (currentPlayer != 1)
+                    {
+                        canMove = false;
+                        waitingForMove = false;
+                        StopAllNodeAnimations();
+                        StartCoroutine(SetupCase14Scenario());
+                        return;
+                    }
+
+                    // If still Player 1, they made a valid bounce. 
+                    // Update the node reference and let them continue playing.
+                    nodeBeforeMove = currentNode;
+                    StopAllNodeAnimations();
+                    return; 
+                }
+
                 savedMoveDelta = currentNode.position - nodeBeforeMove.position;
 
-                // Capture Step 6 move (Second part of the boundary bounce)
+                // Capture Step 6 move
                 if (stepNumber == 6)
                 {
                     step6Target = currentNode.position;
@@ -275,6 +281,31 @@ public class TutorialLogicManager : LogicManager
         }
     }
 
+    private void HighlightBoundaryEdges()
+    {
+        // Horizontal edges (Bottom y=0 and Top y=height-1)
+        for (int x = 0; x < width - 1; x++)
+        {
+            // Bottom edge: Skip goal segments (3,0)-(4,0) and (4,0)-(5,0)
+            if (x != 3 && x != 4)
+            {
+                HighlightEdge(new Vector2Int(x, 0), new Vector2Int(x + 1, 0));
+            }
+
+            // Top edge: Skip goal segments (3,10)-(4,10) and (4,10)-(5,10)
+            if (x != 3 && x != 4)
+            {
+                HighlightEdge(new Vector2Int(x, height - 1), new Vector2Int(x + 1, height - 1));
+            }
+        }
+
+        // Vertical edges (Left x=0 and Right x=width-1)
+        for (int y = 0; y < height - 1; y++)
+        {
+            HighlightEdge(new Vector2Int(0, y), new Vector2Int(0, y + 1));
+            HighlightEdge(new Vector2Int(width - 1, y), new Vector2Int(width - 1, y + 1));
+        }
+    }
 
     private System.Collections.IEnumerator CheckStep12Result()
     {
@@ -342,7 +373,7 @@ public class TutorialLogicManager : LogicManager
                 allowSwipe = false;
 
                 isWaitingForTypewriterComplete = true;
-                ShowTypewriterText("Click on any adjacent node to move");
+                ShowTypewriterText("Click on any adjacent node to move.");
                 HighlightNeighbors();
                 nodeBeforeMove = currentNode;
                 waitingForMove = true;
@@ -360,7 +391,7 @@ public class TutorialLogicManager : LogicManager
                 allowTap = false;
                 allowSwipe = true;
                 isWaitingForTypewriterComplete = true;
-                ShowTypewriterText("Now try the swipe move by swiping your finger in one of the available directions");
+                ShowTypewriterText("Now try the swipe move by swiping your finger in one of the available directions.");
 
                 nodeBeforeMove = currentNode;
                 waitingForMove = true;
@@ -376,7 +407,7 @@ public class TutorialLogicManager : LogicManager
                 allowTap = true;
                 nextStepAllowed = true;
                 isWaitingForTypewriterComplete = true;
-                ShowTypewriterText("Excellent! Now you're going to learn about jumps. Tap anywhere to continue");
+                ShowTypewriterText("Excellent! Now you're going to learn about jumps. Tap anywhere to continue.");
                 break;
 
             case 4:
@@ -388,7 +419,7 @@ public class TutorialLogicManager : LogicManager
             case 6:
                 nextStepAllowed = true;
                 isWaitingForTypewriterComplete = true;
-                ShowTypewriterText("Good job! You can also bounce off existing lines. Tap anywhere to end your turn");
+                ShowTypewriterText("Good job! You can also bounce off existing lines. Tap anywhere to end your turn.");
                 break;
 
             case 7:
@@ -403,7 +434,7 @@ public class TutorialLogicManager : LogicManager
                 nextStepAllowed = false;
                 isWaitingForTypewriterComplete = true;
                 HighlightStep8Lines();
-                ShowTypewriterText("Now try bouncing off one of the already drawn lines", false);
+                ShowTypewriterText("Now try bouncing off one of the already drawn lines.", false);
                 waitingForMove = true;
                 nodeBeforeMove = currentNode;
                 break;
@@ -411,7 +442,7 @@ public class TutorialLogicManager : LogicManager
             case 9:
                 nextStepAllowed = true;
                 isWaitingForTypewriterComplete = true;
-                ShowTypewriterText("Good job! However, sometimes you may end up with no valid moves. Tap anywhere to see an example");
+                ShowTypewriterText("Good job! However, sometimes you may end up with no valid moves. Tap anywhere to see an example.");
                 break;
 
             case 10:
@@ -434,21 +465,98 @@ public class TutorialLogicManager : LogicManager
                 HighlightEdge(new Vector2Int(8, 5), new Vector2Int(7, 4));
 
                 isWaitingForTypewriterComplete = true;
-                ShowTypewriterText("As you can see, there's no way out. Getting stuck results in losing the game. Tap anywhere to continue");
+                ShowTypewriterText("As you can see, there's no way out. Getting stuck results in losing the game. Tap anywhere to continue.");
                 nextStepAllowed = true;
                 break;
 
             case 12:
                 StartCoroutine(SetupCase12Scenario());
                 break;
-
+            
             case 13:
                 isWaitingForTypewriterComplete = true;
-                ShowTypewriterText("Congratulations! You've completed the tutorial. Good luck!");
+                ShowTypewriterText("Nice! Click anywhere to take the last step.");
+                nextStepAllowed = true;
                 break;
 
+            case 14:
+                StartCoroutine(SetupCase14Scenario());
+                break;
+
+            case 15:
+                isWaitingForTypewriterComplete = true;
+                ShowTypewriterText("Congrats!", false);
+                nextStepAllowed = false;
+                waitingForMove = false;
+                canMove = false;
+                break;
+        }
+    }
+
+    private System.Collections.IEnumerator SetupCase14Scenario()
+    {
+        if (blackScreenPanel != null)
+        {
+            blackScreenPanel.gameObject.SetActive(true);
+            yield return StartCoroutine(FadePanel(blackScreenPanel, 0f, 1f, 0.5f));
+        }
+        tutorialCheckpoint = 14;
+        RestartGame();
+    }
+
+    private System.Collections.IEnumerator SetupCase14ScenarioPostRestart()
+    {
+        allowSwipe = false;
+        allowTap = false;
+
+        if (blackScreenPanel != null)
+        {
+            blackScreenPanel.gameObject.SetActive(true);
+            Color c = blackScreenPanel.color;
+            c.a = 1f;
+            blackScreenPanel.color = c;
         }
 
+        isTutorialMode = true;
+        yield return new WaitForSeconds(0.1f);
+
+        
+        SelectNode(new Vector3(4, 0, 6)); yield return new WaitForSeconds(0.02f); // P1
+        SelectNode(new Vector3(4, 0, 7)); yield return new WaitForSeconds(0.02f); // P2
+        SelectNode(new Vector3(4, 0, 8)); yield return new WaitForSeconds(0.02f); // P1
+        SelectNode(new Vector3(4, 0, 9)); yield return new WaitForSeconds(0.02f); // P2
+        SelectNode(new Vector3(4, 0, 10)); yield return new WaitForSeconds(0.02f);
+        SelectNode(new Vector3(3, 0, 9)); yield return new WaitForSeconds(0.02f);
+        SelectNode(new Vector3(4, 0, 8)); yield return new WaitForSeconds(0.02f);
+        SelectNode(new Vector3(3, 0, 8)); yield return new WaitForSeconds(0.02f);
+        SelectNode(new Vector3(4, 0, 7)); yield return new WaitForSeconds(0.02f);
+        SelectNode(new Vector3(3, 0, 6)); yield return new WaitForSeconds(0.02f);
+        SelectNode(new Vector3(4, 0, 6)); yield return new WaitForSeconds(0.02f);
+        SelectNode(new Vector3(3, 0, 7)); yield return new WaitForSeconds(0.02f);
+        SelectNode(new Vector3(2, 0, 6)); yield return new WaitForSeconds(0.02f);
+        SelectNode(new Vector3(1, 0, 7)); yield return new WaitForSeconds(0.02f);
+        SelectNode(new Vector3(1, 0, 6)); yield return new WaitForSeconds(0.02f);
+        SelectNode(new Vector3(1, 0, 5)); yield return new WaitForSeconds(0.02f);
+
+        currentPlayer = 1;
+
+        if (blackScreenPanel != null)
+        {
+            yield return StartCoroutine(FadePanel(blackScreenPanel, 1f, 0f, 0.5f));
+            blackScreenPanel.gameObject.SetActive(false);
+        }
+
+        currentPlayer = 1;
+        allowSwipe = true;
+        allowTap = true;
+        nextStepAllowed = false;
+        isWaitingForTypewriterComplete = true;
+
+        ShowTypewriterText("Use everything you've learned so far to win the game on your turn!", false);
+
+        canMove = true;
+        nodeBeforeMove = currentNode;
+        waitingForMove = true;
     }
 
     private System.Collections.IEnumerator SetupCase12Scenario()
@@ -558,7 +666,7 @@ public class TutorialLogicManager : LogicManager
         allowTap = true;
         nextStepAllowed = true;
         isWaitingForTypewriterComplete = true;
-        ShowTypewriterText("Here, after moving to the right, you'll be stuck. Tap anywhere to continue");
+        ShowTypewriterText("Here, after moving to the right, you'll be stuck. Tap anywhere to continue.");
         
         nodeBeforeMove = currentNode;
         waitingForMove = true;
@@ -670,7 +778,7 @@ public class TutorialLogicManager : LogicManager
         nextStepAllowed = false;
         isWaitingForTypewriterComplete = true;
         HighlightStep8Lines();
-        ShowTypewriterText("Now try bouncing off one of the already drawn lines", false);
+        ShowTypewriterText("Now try bouncing off one of the already drawn lines.", false);
         waitingForMove = true; 
         nodeBeforeMove = currentNode;
     }
