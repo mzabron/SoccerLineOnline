@@ -361,6 +361,10 @@ public class TutorialLogicManager : LogicManager
         {
             typewriterAnimation.CompleteTypewriter();
         }
+        else if (isWaitingForTypewriterComplete)
+        {
+            return;
+        }
         else if (nextStepAllowed == true)
         {
             NextTutorialStep();
