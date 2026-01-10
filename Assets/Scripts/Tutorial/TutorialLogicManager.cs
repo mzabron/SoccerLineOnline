@@ -16,6 +16,7 @@ public class TutorialLogicManager : LogicManager
     [SerializeField] private TMP_Text CommandText;
     [SerializeField] private HandSwipeAnimation handAnimation;
     [SerializeField] private Image blackScreenPanel;
+    [SerializeField] private GameObject completePanel;
 
     private TypewriterAnimation typewriterAnimation;
 
@@ -107,6 +108,11 @@ public class TutorialLogicManager : LogicManager
     protected override void Update()
     {
         base.Update();
+
+        // If completion UI is up, don't intercept clicks/taps (let UI buttons work)
+        if (completePanel != null && completePanel.activeInHierarchy)
+            return;
+
         bool isGoalScored = soccer != null && soccer.transform.position.z > 10.2f;
 
         // Step 12 Win Logic
@@ -117,7 +123,6 @@ public class TutorialLogicManager : LogicManager
         }
 
         // --- STEP 14 WIN LOGIC ---
-
         if (stepNumber == 14 && isGoalScored && canMove)
         {
             stepNumber = 15;
@@ -390,16 +395,18 @@ public class TutorialLogicManager : LogicManager
 
                 allowTap = false;
                 allowSwipe = true;
+                // Move hand animation start BEFORE text to ensure it initializes concurrent with text start
+                if (handAnimation != null)
+                {
+                    if (handSwipeCoroutine != null) StopCoroutine(handSwipeCoroutine);
+                    handSwipeCoroutine = StartCoroutine(HandSwipeLoop());
+                }
+
                 isWaitingForTypewriterComplete = true;
                 ShowTypewriterText("Now try the swipe move by swiping your finger in one of the available directions.");
 
                 nodeBeforeMove = currentNode;
                 waitingForMove = true;
-
-                if (handAnimation != null)
-                {
-                    handSwipeCoroutine = StartCoroutine(HandSwipeLoop());
-                }
                 break;
 
             case 3:
@@ -486,6 +493,10 @@ public class TutorialLogicManager : LogicManager
             case 15:
                 isWaitingForTypewriterComplete = true;
                 ShowTypewriterText("Congrats!", false);
+                if (completePanel != null)
+                {
+                    completePanel.gameObject.SetActive(true);
+                }
                 nextStepAllowed = false;
                 waitingForMove = false;
                 canMove = false;
@@ -892,10 +903,6 @@ public class TutorialLogicManager : LogicManager
         {
             stepNumber++;
         }
-        
-        // Logic to re-enable movement based on step
-        // If we advanced step, we check the finished step (stepNumber - 1)
-        // If we didn't advance (Step 8 loop), we check current stepNumber
         
         bool shouldEnableMove = false;
         int checkStep = advanceStep ? stepNumber - 1 : stepNumber;
