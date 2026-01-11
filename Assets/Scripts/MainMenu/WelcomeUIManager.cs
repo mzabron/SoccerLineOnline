@@ -18,14 +18,14 @@ public class WelcomeUIManager : MonoBehaviour
     [SerializeField] private GameObject fadeCanvas;
     [SerializeField] private CanvasGroup fadeCanvasGroup;
     [SerializeField] private Image fadeImage;
-    [SerializeField] private float fadeDuration = 1f;
+    [SerializeField] private float fadeDuration = 0.5f; // Faster default
     [SerializeField] private AnimationCurve fadeCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
     [Header("Tutorial Settings")]
     [SerializeField] private GameObject tutorialCanvas;
     [SerializeField] private Button tutorialNoButton;
     [SerializeField] private Button tutorialYesButton;
-    [SerializeField] private float transitionHoldDuration = 0.5f;
+    [SerializeField] private float transitionHoldDuration = 0.2f;
 
     [Header("First Launch Settings")]
     [SerializeField] private bool skipFirstLaunchCheck = false;
@@ -114,7 +114,6 @@ public class WelcomeUIManager : MonoBehaviour
                 if (fadeCanvasGroup == null)
                 {
                     fadeCanvasGroup = fadeCanvas.AddComponent<CanvasGroup>();
-                    Debug.Log("CanvasGroup component added automatically to fadeCanvas");
                 }
             }
         }
@@ -147,62 +146,23 @@ public class WelcomeUIManager : MonoBehaviour
 
     public void ShowWelcomeScreen()
     {
-        if (mainMenuCanvas != null)
-        {
-            mainMenuCanvas.SetActive(true);
-        }
-
-        if (welcomeScreenCanvas != null)
-        {
-            welcomeScreenCanvas.SetActive(true);
-        }
-
-        if (tutorialCanvas != null)
-        {
-            tutorialCanvas.SetActive(false);
-        }
-
-        Debug.Log("Welcome screen activated");
+        if (mainMenuCanvas != null) mainMenuCanvas.SetActive(true);
+        if (welcomeScreenCanvas != null) welcomeScreenCanvas.SetActive(true);
+        if (tutorialCanvas != null) tutorialCanvas.SetActive(false);
     }
 
     public void ShowMainMenu()
     {
-        if (mainMenuCanvas != null)
-        {
-            mainMenuCanvas.SetActive(true);
-        }
-
-        if (welcomeScreenCanvas != null)
-        {
-            welcomeScreenCanvas.SetActive(false);
-        }
-
-        if (tutorialCanvas != null)
-        {
-            tutorialCanvas.SetActive(false);
-        }
-
-        if (menuUIManager != null)
-        {
-            menuUIManager.LoadPlayerName();
-        }
-
-        Debug.Log("Main menu activated");
+        if (mainMenuCanvas != null) mainMenuCanvas.SetActive(true);
+        if (welcomeScreenCanvas != null) welcomeScreenCanvas.SetActive(false);
+        if (tutorialCanvas != null) tutorialCanvas.SetActive(false);
+        if (menuUIManager != null) menuUIManager.LoadPlayerName();
     }
 
     private void ShowTutorial()
     {
-        if (welcomeScreenCanvas != null)
-        {
-            welcomeScreenCanvas.SetActive(false);
-        }
-
-        if (tutorialCanvas != null)
-        {
-            tutorialCanvas.SetActive(true);
-        }
-
-        Debug.Log("Tutorial canvas activated");
+        if (welcomeScreenCanvas != null) welcomeScreenCanvas.SetActive(false);
+        if (tutorialCanvas != null) tutorialCanvas.SetActive(true);
     }
 
     private void OnSubmitButtonClick()
@@ -225,8 +185,6 @@ public class WelcomeUIManager : MonoBehaviour
     private void OnTutorialNoButtonClick()
     {
         if (isProcessing) return;
-
-        Debug.Log("Tutorial 'No' button clicked - transitioning to main menu");
         StartMainMenuTransition();
     }
 
@@ -240,153 +198,138 @@ public class WelcomeUIManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("SceneLoader not found. Loading Tutorial scene directly.");
             UnityEngine.SceneManagement.SceneManager.LoadScene("Tutorial");
-        }
+        } 
     }
 
     private void StartTutorialTransition()
     {
-        if (fadeCoroutine != null)
-        {
-            StopCoroutine(fadeCoroutine);
-        }
+        if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
         fadeCoroutine = StartCoroutine(TutorialTransitionCoroutine());
     }
 
     private void StartMainMenuTransition()
     {
-        if (fadeCoroutine != null)
-        {
-            StopCoroutine(fadeCoroutine);
-        }
+        if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
         fadeCoroutine = StartCoroutine(MainMenuTransitionCoroutine());
     }
 
     private IEnumerator TutorialTransitionCoroutine()
     {
         isProcessing = true;
+        if (submitButton != null) submitButton.interactable = false;
 
-        if (submitButton != null)
-        {
-            submitButton.interactable = false;
-        }
+        // 1. Fade OUT to Black (Alpha 0 -> 1)
+        yield return StartCoroutine(FadeToBlack());
 
-        if (menuUIManager != null)
-        {
-            menuUIManager.LoadPlayerName();
-        }
+        if (menuUIManager != null) menuUIManager.RefreshPlayerName();
 
-        yield return StartCoroutine(FadeIn());
-
+        // 2. Switch Canvases behind the black screen
         ShowTutorial();
 
-        yield return new WaitForSeconds(transitionHoldDuration);
-        yield return StartCoroutine(FadeOut());
+        // Optional hold
+        if (transitionHoldDuration > 0)
+            yield return new WaitForSeconds(transitionHoldDuration);
+
+        // 3. Fade IN from Black (Alpha 1 -> 0)
+        yield return StartCoroutine(FadeFromBlack());
 
         isProcessing = false;
-
-        Debug.Log("Tutorial transition completed");
+        if (submitButton != null) submitButton.interactable = true;
     }
 
     private IEnumerator MainMenuTransitionCoroutine()
     {
         isProcessing = true;
 
-        yield return StartCoroutine(FadeIn());
+        // 1. Fade OUT to Black
+        yield return StartCoroutine(FadeToBlack());
+
+        // 2. Switch
         ShowMainMenu();
 
-        yield return new WaitForSeconds(transitionHoldDuration);
-        yield return StartCoroutine(FadeOut());
+        if (transitionHoldDuration > 0)
+            yield return new WaitForSeconds(transitionHoldDuration);
+
+        // 3. Fade IN from Black
+        yield return StartCoroutine(FadeFromBlack());
 
         isProcessing = false;
-
-        Debug.Log("Main menu transition completed");
     }
 
-    private IEnumerator FadeIn()
+    // "Fade In" effect for the Overlay (Screen becomes dark)
+    private IEnumerator FadeToBlack()
     {
         if (fadeCanvas != null)
         {
             fadeCanvas.SetActive(true);
-            if (fadeCanvasGroup != null)
-            {
-                fadeCanvasGroup.alpha = 0f;
-            }
+            fadeCanvas.transform.SetAsLastSibling(); // Ensure it's on top
         }
 
-        if (fadeImage != null)
+        float elapsed = 0f;
+        float startAlpha = 0f;
+        float targetAlpha = 1f;
+
+        // Force initial state
+        SetOverlayAlpha(startAlpha);
+
+        while (elapsed < fadeDuration)
         {
-            float elapsed = 0f;
-            Color startColor = fadeImage.color;
-            Color targetColor = startColor;
-            targetColor.a = 1f;
-
-            float startAlpha = fadeCanvasGroup != null ? fadeCanvasGroup.alpha : 0f;
-            float targetAlpha = 1f;
-
-            while (elapsed < fadeDuration)
-            {
-                elapsed += Time.deltaTime;
-                float t = elapsed / fadeDuration;
-                float curveT = fadeCurve.Evaluate(t);
-
-                Color currentColor = Color.Lerp(startColor, targetColor, curveT);
-                fadeImage.color = currentColor;
-                if (fadeCanvasGroup != null)
-                {
-                    fadeCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, curveT);
-                }
-
-                yield return null;
-            }
-
-            fadeImage.color = targetColor;
-            if (fadeCanvasGroup != null)
-            {
-                fadeCanvasGroup.alpha = targetAlpha;
-            }
+            elapsed += Time.deltaTime;
+            float t = elapsed / fadeDuration;
+            float curveT = fadeCurve.Evaluate(t);
+            float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, curveT);
+            
+            SetOverlayAlpha(currentAlpha);
+            yield return null;
         }
+
+        SetOverlayAlpha(targetAlpha);
     }
 
-    private IEnumerator FadeOut()
+    // "Fade Out" effect for the Overlay (Screen reveals)
+    private IEnumerator FadeFromBlack()
     {
-        if (fadeImage != null)
+        if (fadeCanvas != null) fadeCanvas.SetActive(true);
+
+        float elapsed = 0f;
+        float startAlpha = 1f;
+        float targetAlpha = 0f;
+
+        // Force initial state
+        SetOverlayAlpha(startAlpha);
+
+        while (elapsed < fadeDuration)
         {
-            float elapsed = 0f;
-            Color startColor = fadeImage.color;
-            Color targetColor = startColor;
-            targetColor.a = 0f;
+            elapsed += Time.deltaTime;
+            float t = elapsed / fadeDuration;
+            float curveT = fadeCurve.Evaluate(t);
+            float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, curveT);
 
-            float startAlpha = fadeCanvasGroup != null ? fadeCanvasGroup.alpha : 1f;
-            float targetAlpha = 0f;
-
-            while (elapsed < fadeDuration)
-            {
-                elapsed += Time.deltaTime;
-                float t = elapsed / fadeDuration;
-                float curveT = fadeCurve.Evaluate(t);
-
-                Color currentColor = Color.Lerp(startColor, targetColor, curveT);
-                fadeImage.color = currentColor;
-                if (fadeCanvasGroup != null)
-                {
-                    fadeCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, curveT);
-                }
-
-                yield return null;
-            }
-
-            fadeImage.color = targetColor;
-            if (fadeCanvasGroup != null)
-            {
-                fadeCanvasGroup.alpha = targetAlpha;
-            }
+            SetOverlayAlpha(currentAlpha);
+            yield return null;
         }
+
+        SetOverlayAlpha(targetAlpha);
 
         if (fadeCanvas != null)
         {
             fadeCanvas.SetActive(false);
+        }
+    }
+
+    private void SetOverlayAlpha(float alpha)
+    {
+        if (fadeCanvasGroup != null)
+        {
+            fadeCanvasGroup.alpha = alpha;
+        }
+        
+        if (fadeImage != null)
+        {
+            Color c = fadeImage.color;
+            c.a = alpha;
+            fadeImage.color = c;
         }
     }
 
@@ -435,32 +378,12 @@ public class WelcomeUIManager : MonoBehaviour
 
     void OnDestroy()
     {
-        Debug.Log("WelcomeUIManager: OnDestroy called");
+        if (submitButton != null) submitButton.onClick.RemoveListener(OnSubmitButtonClick);
+        if (tutorialNoButton != null) tutorialNoButton.onClick.RemoveListener(OnTutorialNoButtonClick);
+        if (tutorialYesButton != null) tutorialYesButton.onClick.RemoveListener(OnTutorialYesButtonClick);
 
-        if (submitButton != null)
-        {
-            submitButton.onClick.RemoveListener(OnSubmitButtonClick);
-        }
-
-        if (tutorialNoButton != null)
-        {
-            tutorialNoButton.onClick.RemoveListener(OnTutorialNoButtonClick);
-        }
-
-        if (tutorialYesButton != null)
-        {
-            tutorialYesButton.onClick.RemoveListener(OnTutorialYesButtonClick);
-        }
-
-        if (pulseCoroutine != null)
-        {
-            StopCoroutine(pulseCoroutine);
-        }
-
-        if (fadeCoroutine != null)
-        {
-            StopCoroutine(fadeCoroutine);
-        }
+        if (pulseCoroutine != null) StopCoroutine(pulseCoroutine);
+        if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
     }
 
     [ContextMenu("Reset First Launch")]
@@ -468,24 +391,12 @@ public class WelcomeUIManager : MonoBehaviour
     {
         PlayerPrefs.DeleteKey(FIRST_LAUNCH_KEY);
         PlayerPrefs.Save();
-        Debug.Log("First launch status reset. Welcome screen will show on next launch.");
+        Debug.Log("First launch status reset.");
     }
 
     [ContextMenu("Show Welcome Screen")]
     public void ForceShowWelcomeScreen()
     {
         ShowWelcomeScreen();
-    }
-
-    [ContextMenu("Show Main Menu")]
-    public void ForceShowMainMenu()
-    {
-        ShowMainMenu();
-    }
-
-    [ContextMenu("Show Tutorial")]
-    public void ForceShowTutorial()
-    {
-        ShowTutorial();
     }
 }

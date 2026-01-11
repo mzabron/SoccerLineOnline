@@ -615,8 +615,14 @@ MonoBehaviour:
   allowSwipeMoveToggle: {fileID: 345354477}
   actionButton: {fileID: 1389117522}
   gameOverCanvas: {fileID: 1644837353}
+  gameOverPanel: {fileID: 1084491515}
   winnerMessageText: {fileID: 1409994036}
   winnerRatingText: {fileID: 1189315011}
+  newGameButton: {fileID: 1791824336}
+  exitButton: {fileID: 1439898054}
+  quitPanel: {fileID: 1468882049}
+  quitYesButton: {fileID: 1979894707}
+  quitNoButton: {fileID: 621844441}
   maxTextAlpha: 1
   minTextAlpha: 0.5882353
   maxPanelAlpha: 0.19607843

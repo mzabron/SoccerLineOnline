@@ -2,13 +2,22 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class UIManager : SettingsUI
 {
     [Header("Game Over UI")]
     [SerializeField] private GameObject gameOverCanvas;
+    [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private TMP_Text winnerMessageText;
     [SerializeField] private TMP_Text winnerRatingText;
+    [SerializeField] private Button newGameButton;
+
+    [Header("Quit UI")]
+    [SerializeField] private Button exitButton;
+    [SerializeField] private GameObject quitPanel;
+    [SerializeField] private Button quitYesButton;
+    [SerializeField] private Button quitNoButton;
 
     [Header("Timer Animation Settings")]
     [SerializeField] private float maxTextAlpha = 1f;
@@ -29,11 +38,13 @@ public class UIManager : SettingsUI
     private Color originalPlayer1PanelColor;
     private Color originalPlayer2TextColor;
     private Color originalPlayer2PanelColor;
+
     protected override void Start()
     {
         base.Start();
         logicManager = FindFirstObjectByType<LogicManager>();
         InitializeGameUI();
+        InitializeQuitUI();
 
         if (player1TimerText != null)
             originalPlayer1TextColor = player1TimerText.color;
@@ -188,6 +199,26 @@ public class UIManager : SettingsUI
         {
             gameOverCanvas.SetActive(false);
         }
+
+        if (newGameButton != null)
+        {
+            newGameButton.onClick.AddListener(OnRestartGameButtonClick);
+        }
+    }
+
+    private void InitializeQuitUI()
+    {
+        if (exitButton != null)
+            exitButton.onClick.AddListener(OnExitButtonClick);
+        
+        if (quitYesButton != null)
+            quitYesButton.onClick.AddListener(OnQuitYesButtonClick);
+        
+        if (quitNoButton != null)
+            quitNoButton.onClick.AddListener(OnQuitNoButtonClick);
+
+        if (quitPanel != null)
+            quitPanel.SetActive(false);
     }
 
     public void OnRestartGameButtonClick()
@@ -200,19 +231,60 @@ public class UIManager : SettingsUI
         }
     }
 
+    public void OnExitButtonClick()
+    {
+        if (gameOverCanvas != null) gameOverCanvas.SetActive(true);
+        if (quitPanel != null) quitPanel.SetActive(true);
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+    }
+
+    public void OnQuitYesButtonClick()
+    {
+        if (quitPanel != null)
+        {
+            quitPanel.SetActive(false);
+        }
+
+        if (SceneLoader.instance != null)
+        {
+            SceneLoader.instance.ChangeSceneTo("MainMenu");
+        }
+        else
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
+    }
+
+    public void OnQuitNoButtonClick()
+    {
+        if (quitPanel != null)
+        {
+            quitPanel.SetActive(false);
+        }
+        if (gameOverCanvas != null)
+        {
+            gameOverCanvas.SetActive(false);
+        }
+    }
+
     public void ShowGameOverScreen()
     {
         if (gameOverCanvas != null)
         {
             gameOverCanvas.SetActive(true);
+            if (gameOverPanel != null) gameOverPanel.SetActive(true);
+            if (quitPanel != null) quitPanel.SetActive(false);
             Debug.Log("Game Over screen displayed");
         }
     }
+
     public void ShowGameOverScreen(string winnerNickname, int winnerRating)
     {
         if (gameOverCanvas != null)
         {
             gameOverCanvas.SetActive(true);
+            if (gameOverPanel != null) gameOverPanel.SetActive(true);
+            if (quitPanel != null) quitPanel.SetActive(false);
 
             if (winnerMessageText != null)
             {
@@ -240,11 +312,29 @@ public class UIManager : SettingsUI
             Debug.Log("Game Over screen hidden");
         }
     }
+
     protected override void CleanupActionButton()
     {
         if (actionButton != null)
         {
             actionButton.onClick.RemoveListener(OnRestartGameButtonClick);
         }
+    }
+
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+
+        if (exitButton != null)
+            exitButton.onClick.RemoveListener(OnExitButtonClick);
+        
+        if (quitYesButton != null)
+            quitYesButton.onClick.RemoveListener(OnQuitYesButtonClick);
+        
+        if (quitNoButton != null)
+            quitNoButton.onClick.RemoveListener(OnQuitNoButtonClick);
+
+        if (newGameButton != null)
+            newGameButton.onClick.RemoveListener(OnRestartGameButtonClick);
     }
 }

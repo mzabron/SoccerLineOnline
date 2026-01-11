@@ -82,8 +82,8 @@ public class MenuUIManager : SettingsUI
     void Awake()
     {
         // TEMPORARY: Clear PlayerPrefs in Awake to ensure it happens before other scripts' Start()
-        PlayerPrefs.DeleteAll();
-        PlayerPrefs.Save();
+        //PlayerPrefs.DeleteAll();
+        //PlayerPrefs.Save();
     }
 
     protected override void Start()
