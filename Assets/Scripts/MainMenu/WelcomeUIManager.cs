@@ -24,6 +24,7 @@ public class WelcomeUIManager : MonoBehaviour
     [Header("Tutorial Settings")]
     [SerializeField] private GameObject tutorialCanvas;
     [SerializeField] private Button tutorialNoButton;
+    [SerializeField] private Button tutorialYesButton;
     [SerializeField] private float transitionHoldDuration = 0.5f;
 
     [Header("First Launch Settings")]
@@ -137,6 +138,11 @@ public class WelcomeUIManager : MonoBehaviour
         {
             tutorialNoButton.onClick.AddListener(OnTutorialNoButtonClick);
         }
+
+        if (tutorialYesButton != null)
+        {
+            tutorialYesButton.onClick.AddListener(OnTutorialYesButtonClick);
+        }
     }
 
     public void ShowWelcomeScreen()
@@ -222,6 +228,21 @@ public class WelcomeUIManager : MonoBehaviour
 
         Debug.Log("Tutorial 'No' button clicked - transitioning to main menu");
         StartMainMenuTransition();
+    }
+
+    private void OnTutorialYesButtonClick()
+    {
+        if (isProcessing) return;
+
+        if (SceneLoader.instance != null)
+        {
+            SceneLoader.instance.ChangeSceneTo("Tutorial");
+        }
+        else
+        {
+            Debug.LogWarning("SceneLoader not found. Loading Tutorial scene directly.");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Tutorial");
+        }
     }
 
     private void StartTutorialTransition()
@@ -424,6 +445,11 @@ public class WelcomeUIManager : MonoBehaviour
         if (tutorialNoButton != null)
         {
             tutorialNoButton.onClick.RemoveListener(OnTutorialNoButtonClick);
+        }
+
+        if (tutorialYesButton != null)
+        {
+            tutorialYesButton.onClick.RemoveListener(OnTutorialYesButtonClick);
         }
 
         if (pulseCoroutine != null)
