@@ -2,6 +2,7 @@
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Collections;
 using TMPro;
 
 public class MenuUIManager : SettingsUI
@@ -28,6 +29,24 @@ public class MenuUIManager : SettingsUI
     [Header("Flag Scaling Settings")]
     [SerializeField] private Vector2 flagScaleFactors = new Vector2(0.9187472f, 0.428239f); //parent panel Scale
 
+    [Header("Localhost Panel")]
+    [SerializeField] private Button local2PlayersButton;
+    [SerializeField] private GameObject localhostPanel;
+    [SerializeField] private Button localhostCancelButton;
+    [SerializeField] private Toggle noTimeToggle;
+    [SerializeField] private TMP_Text timeSelectionText;
+    [SerializeField] private Button timeLeftArrowButton;
+    [SerializeField] private Button timeRightArrowButton;
+
+    [Header("Localhost Animation")]
+    [SerializeField] private CarouselTextAnimation localhostTimeAnimator;
+
+    [Header("Hint Panel")]
+    [SerializeField] private Button hintButton;
+    [SerializeField] private GameObject hintPanel;
+    [SerializeField] private Button hintCancelButton;
+    [SerializeField] private Button startTutorialButton;
+
     private List<GameObject> instantiatedFlagButtons = new List<GameObject>();
     private GridLayoutGroup gridLayout;
     private RectTransform gridRectTransform;
@@ -36,6 +55,10 @@ public class MenuUIManager : SettingsUI
     private Vector2 lastFlagSpacing;
     private RectOffset lastGridPadding;
     private float lastPanelWidth;
+
+    // Localhost Panel Variables
+    private readonly int[] timeOptions = { 1, 3, 5, 10 };
+    private int currentTimeIndex = 0;
 
     public static bool IsFlagSelectionOpen { get; private set; } = false;
 
@@ -52,6 +75,14 @@ public class MenuUIManager : SettingsUI
         InitializeFlagSelection();
         LoadSelectedFlag();
         LoadPlayerName();
+        InitializeLocalhostPanel();
+        InitializeHintPanel();
+
+        // Auto-detect animator if not assigned but text exists
+        if (localhostTimeAnimator == null && timeSelectionText != null)
+        {
+            localhostTimeAnimator = timeSelectionText.GetComponent<CarouselTextAnimation>();
+        }
     }
 
     public void LoadPlayerName()
@@ -502,41 +533,165 @@ public class MenuUIManager : SettingsUI
     private void PerformLogOut()
     {
         Debug.Log("Logging out...");
-
-        // Add your logout logic here, such as:
-        // - Clear user data
-        // - Reset player preferences
-        // - Clear authentication tokens
-        // - etc.
-
         isLoggedIn = false;
         UpdateActionButtonText();
-
-        // Optionally navigate to a login scene or show login UI
-        // SceneManager.LoadScene("LoginScene");
-
         Debug.Log("User logged out successfully");
     }
 
     private void PerformLogIn()
     {
         Debug.Log("Attempting to log in...");
-
-        // Add your login logic here, such as:
-        // - Show login form
-        // - Navigate to login scene
-        // - Authenticate with server
-        // - etc.
-
-        // For demo purposes, just toggle the state
-        // In a real implementation, this would happen after successful authentication
         isLoggedIn = true;
         UpdateActionButtonText();
-
-        // SceneManager.LoadScene("LoginScene");
-
         Debug.Log("User logged in successfully");
     }
+
+    // ============================================
+    // Localhost Panel Logic
+    // ============================================
+
+    private void InitializeLocalhostPanel()
+    {
+        if (local2PlayersButton != null)
+            local2PlayersButton.onClick.AddListener(OpenLocalhostPanel);
+
+        if (localhostCancelButton != null)
+            localhostCancelButton.onClick.AddListener(CloseLocalhostPanel);
+
+        if (noTimeToggle != null)
+        {
+            noTimeToggle.isOn = false; // Unchecked by default
+            noTimeToggle.onValueChanged.AddListener(OnNoTimeToggleChanged);
+        }
+
+        if (timeLeftArrowButton != null)
+            timeLeftArrowButton.onClick.AddListener(() => OnTimeArrowClicked(-1));
+
+        if (timeRightArrowButton != null)
+            timeRightArrowButton.onClick.AddListener(() => OnTimeArrowClicked(1));
+
+        if (localhostPanel != null)
+            localhostPanel.SetActive(false);
+
+        // Initialize state
+        currentTimeIndex = 0; // Default to 1 min
+        UpdateLocalhostTimeDisplay();
+        
+        // Ensure initial visuals are correct
+        if (timeSelectionText != null)
+        {
+            timeSelectionText.alpha = 1f;
+        }
+
+        OnNoTimeToggleChanged(false);
+    }
+
+    private void OpenLocalhostPanel()
+    {
+        if (localhostPanel != null) localhostPanel.SetActive(true);
+    }
+
+    private void CloseLocalhostPanel()
+    {
+        if (localhostPanel != null) localhostPanel.SetActive(false);
+    }
+
+    private void OnNoTimeToggleChanged(bool isNoTimeLimit)
+    {
+        // If "No Time" is checked, we disable the specific time controls
+        // The user can interact if the toggle is UNCHECKED (Time limit exists)
+        bool isTimeSelectionEnabled = !isNoTimeLimit;
+
+        if (timeSelectionText != null)
+        {
+            // Make text gray if disabled, white/normal if enabled
+            timeSelectionText.alpha = isTimeSelectionEnabled ? 1f : 0.4f;
+        }
+
+        if (timeLeftArrowButton != null) timeLeftArrowButton.interactable = isTimeSelectionEnabled;
+        if (timeRightArrowButton != null) timeRightArrowButton.interactable = isTimeSelectionEnabled;
+    }
+
+    private void OnTimeArrowClicked(int direction)
+    {
+        // Define the logic to update content (will serve as callback)
+        System.Action updateContent = () => 
+        {
+            currentTimeIndex += direction;
+            
+            // Wrap around logic
+            if (currentTimeIndex < 0) 
+                currentTimeIndex = timeOptions.Length - 1;
+            else if (currentTimeIndex >= timeOptions.Length)
+                currentTimeIndex = 0;
+
+            UpdateLocalhostTimeDisplay();
+        };
+
+        if (localhostTimeAnimator != null)
+        {
+            // Use the generic animator
+            localhostTimeAnimator.AnimateChange(direction, updateContent);
+        }
+        else
+        {
+            // Fallback to immediate update if animator is missing
+            updateContent.Invoke();
+        }
+    }
+
+    private void UpdateLocalhostTimeDisplay()
+    {
+        if (timeSelectionText != null)
+        {
+            timeSelectionText.text = $"{timeOptions[currentTimeIndex]} min";
+        }
+    }
+
+    // ============================================
+    // Hint Panel Logic
+    // ============================================
+
+    private void InitializeHintPanel()
+    {
+        if (hintButton != null)
+            hintButton.onClick.AddListener(OpenHintPanel);
+
+        if (hintCancelButton != null)
+            hintCancelButton.onClick.AddListener(CloseHintPanel);
+
+        if (startTutorialButton != null)
+            startTutorialButton.onClick.AddListener(OnStartTutorialButtonClick);
+
+        if (hintPanel != null)
+            hintPanel.SetActive(false);
+    }
+
+    private void OpenHintPanel()
+    {
+        if (hintPanel != null)
+            hintPanel.SetActive(true);
+    }
+
+    private void CloseHintPanel()
+    {
+        if (hintPanel != null)
+            hintPanel.SetActive(false);
+    }
+
+    private void OnStartTutorialButtonClick()
+    {
+        if (SceneLoader.instance != null)
+        {
+            SceneLoader.instance.ChangeSceneTo("Tutorial");
+        }
+        else
+        {
+            Debug.LogWarning("SceneLoader not found. Loading Tutorial scene directly.");
+            SceneManager.LoadScene("Tutorial");
+        }
+    }
+
 
     protected override void CleanupActionButton()
     {
@@ -556,15 +711,29 @@ public class MenuUIManager : SettingsUI
         base.OnDestroy();
 
         if (flagButton != null)
-        {
             flagButton.onClick.RemoveListener(OnFlagButtonClick);
-        }
 
         if (flagCloseButton != null)
-        {
             flagCloseButton.onClick.RemoveListener(OnFlagCloseButtonClick);
-        }
 
+        if (local2PlayersButton != null) 
+            local2PlayersButton.onClick.RemoveListener(OpenLocalhostPanel);
+
+        if (localhostCancelButton != null) 
+            localhostCancelButton.onClick.RemoveListener(CloseLocalhostPanel);
+
+        if (noTimeToggle != null) 
+            noTimeToggle.onValueChanged.RemoveListener(OnNoTimeToggleChanged);
+        
+        if (hintButton != null)
+            hintButton.onClick.RemoveListener(OpenHintPanel);
+
+        if (hintCancelButton != null)
+            hintCancelButton.onClick.RemoveListener(CloseHintPanel);
+
+        if (startTutorialButton != null)
+            startTutorialButton.onClick.RemoveListener(OnStartTutorialButtonClick);
+        
         ClearFlagButtons();
     }
 
