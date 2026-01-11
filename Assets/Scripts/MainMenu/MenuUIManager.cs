@@ -33,6 +33,7 @@ public class MenuUIManager : SettingsUI
     [SerializeField] private Button local2PlayersButton;
     [SerializeField] private GameObject localhostPanel;
     [SerializeField] private Button localhostCancelButton;
+    [SerializeField] private Button localhostPlayButton;
     [SerializeField] private Toggle noTimeToggle;
     [SerializeField] private TMP_Text timeSelectionText;
     [SerializeField] private Button timeLeftArrowButton;
@@ -47,6 +48,16 @@ public class MenuUIManager : SettingsUI
     [SerializeField] private Button hintCancelButton;
     [SerializeField] private Button startTutorialButton;
 
+    [Header("Game Mode Buttons")]
+    [SerializeField] private Button playOnlineButton;
+    [SerializeField] private Button singlePlayerButton;
+    [SerializeField] private Button playWithFriendButton;
+
+    [Header("Coming Soon Settings")]
+    [SerializeField] private GameObject comingSoonPanel;
+    [SerializeField] private float comingSoonDisplayDuration = 1.0f;
+    [SerializeField] private float comingSoonFadeDuration = 0.5f;
+
     private List<GameObject> instantiatedFlagButtons = new List<GameObject>();
     private GridLayoutGroup gridLayout;
     private RectTransform gridRectTransform;
@@ -59,6 +70,12 @@ public class MenuUIManager : SettingsUI
     // Localhost Panel Variables
     private readonly int[] timeOptions = { 1, 3, 5, 10 };
     private int currentTimeIndex = 0;
+
+    // Coming Soon Variables
+    private Coroutine comingSoonCoroutine;
+    private CanvasGroup comingSoonCanvasGroup;
+    private RectTransform comingSoonRectTransform;
+    private MonoBehaviour conflictingAnimator;
 
     public static bool IsFlagSelectionOpen { get; private set; } = false;
 
@@ -77,6 +94,8 @@ public class MenuUIManager : SettingsUI
         LoadPlayerName();
         InitializeLocalhostPanel();
         InitializeHintPanel();
+        InitializeGameModeButtons();
+        InitializeComingSoonPanel();
 
         // Auto-detect animator if not assigned but text exists
         if (localhostTimeAnimator == null && timeSelectionText != null)
@@ -558,6 +577,9 @@ public class MenuUIManager : SettingsUI
         if (localhostCancelButton != null)
             localhostCancelButton.onClick.AddListener(CloseLocalhostPanel);
 
+        if (localhostPlayButton != null)
+            localhostPlayButton.onClick.AddListener(OnLocalhostPlayButtonClick);
+
         if (noTimeToggle != null)
         {
             noTimeToggle.isOn = false; // Unchecked by default
@@ -594,6 +616,27 @@ public class MenuUIManager : SettingsUI
     private void CloseLocalhostPanel()
     {
         if (localhostPanel != null) localhostPanel.SetActive(false);
+    }
+
+    private void OnLocalhostPlayButtonClick()
+    {
+        int selectedTime = timeOptions[currentTimeIndex];
+        bool isUnlimited = noTimeToggle.isOn;
+
+        PlayerPrefs.SetInt("Game_TimeMinutes", selectedTime);
+        PlayerPrefs.SetInt("Game_TimeUnlimited", isUnlimited ? 1 : 0);
+        PlayerPrefs.SetString("Game_Player1Name", "Blue");
+        PlayerPrefs.SetString("Game_Player2Name", "Red");
+        PlayerPrefs.Save();
+
+        if (SceneLoader.instance != null)
+        {
+            SceneLoader.instance.ChangeSceneTo("Game");
+        }
+        else
+        {
+            SceneManager.LoadScene("Game"); // Fallback
+        }
     }
 
     private void OnNoTimeToggleChanged(bool isNoTimeLimit)
@@ -692,6 +735,99 @@ public class MenuUIManager : SettingsUI
         }
     }
 
+    // ============================================
+    // Game Mode Buttons & Coming Soon Logic
+    // ============================================
+
+    private void InitializeGameModeButtons()
+    {
+        if (playOnlineButton != null)
+            playOnlineButton.onClick.AddListener(ShowComingSoon);
+
+        if (singlePlayerButton != null)
+            singlePlayerButton.onClick.AddListener(ShowComingSoon);
+
+        if (playWithFriendButton != null)
+            playWithFriendButton.onClick.AddListener(ShowComingSoon);
+    }
+
+    private void InitializeComingSoonPanel()
+    {
+        if (comingSoonPanel != null)
+        {
+            comingSoonPanel.SetActive(false);
+            comingSoonCanvasGroup = comingSoonPanel.GetComponent<CanvasGroup>();
+            comingSoonRectTransform = comingSoonPanel.GetComponent<RectTransform>();
+
+            conflictingAnimator = comingSoonPanel.GetComponent("GameOverPanelAnimator") as MonoBehaviour;
+            if (conflictingAnimator == null)
+            {
+                 conflictingAnimator = comingSoonPanel.GetComponent<GameOverPanelAnimator>();
+            }
+
+            if (comingSoonCanvasGroup == null)
+            {
+                // Optionally add one if missing, or we'll just skip the fade effect
+                comingSoonCanvasGroup = comingSoonPanel.AddComponent<CanvasGroup>();
+            }
+        }
+    }
+
+    private void ShowComingSoon()
+    {
+        if (comingSoonPanel == null) return;
+
+        if (comingSoonCoroutine != null)
+        {
+            StopCoroutine(comingSoonCoroutine);
+        }
+
+        comingSoonCoroutine = StartCoroutine(ComingSoonRoutine());
+    }
+
+    private IEnumerator ComingSoonRoutine()
+    {
+        // Force disable conflicting animator before showing
+        if (conflictingAnimator != null)
+        {
+            conflictingAnimator.enabled = false;
+        }
+
+        comingSoonPanel.SetActive(true);
+        
+        // Reset position to center of screen/parent to ensure visibility
+        if (comingSoonRectTransform != null)
+        {
+            comingSoonRectTransform.anchoredPosition = Vector2.zero;
+        }
+
+        if (comingSoonCanvasGroup != null)
+        {
+            comingSoonCanvasGroup.alpha = 1f;
+        }
+
+        // Wait for the display duration
+        yield return new WaitForSeconds(comingSoonDisplayDuration);
+
+        // Fade out
+        if (comingSoonCanvasGroup != null)
+        {
+            float elapsed = 0f;
+            float startAlpha = comingSoonCanvasGroup.alpha;
+
+            while (elapsed < comingSoonFadeDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / comingSoonFadeDuration;
+                comingSoonCanvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, t);
+                yield return null;
+            }
+            comingSoonCanvasGroup.alpha = 0f;
+        }
+
+        comingSoonPanel.SetActive(false);
+        comingSoonCoroutine = null;
+    }
 
     protected override void CleanupActionButton()
     {
@@ -722,6 +858,9 @@ public class MenuUIManager : SettingsUI
         if (localhostCancelButton != null) 
             localhostCancelButton.onClick.RemoveListener(CloseLocalhostPanel);
 
+        if (localhostPlayButton != null) 
+            localhostPlayButton.onClick.RemoveListener(OnLocalhostPlayButtonClick);
+
         if (noTimeToggle != null) 
             noTimeToggle.onValueChanged.RemoveListener(OnNoTimeToggleChanged);
         
@@ -734,6 +873,15 @@ public class MenuUIManager : SettingsUI
         if (startTutorialButton != null)
             startTutorialButton.onClick.RemoveListener(OnStartTutorialButtonClick);
         
+        if (playOnlineButton != null)
+            playOnlineButton.onClick.RemoveListener(ShowComingSoon);
+
+        if (singlePlayerButton != null)
+            singlePlayerButton.onClick.RemoveListener(ShowComingSoon);
+
+        if (playWithFriendButton != null)
+            playWithFriendButton.onClick.RemoveListener(ShowComingSoon);
+
         ClearFlagButtons();
     }
 

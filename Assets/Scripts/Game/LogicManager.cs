@@ -29,6 +29,9 @@ public class LogicManager : MonoBehaviour
     public bool isPlayer1TimeLow = false;
     public bool isPlayer2TimeLow = false;
 
+
+    protected bool isTimeUnlimited = false;
+
     private int winnerPlayer = 0;
     private string winnerNickname = "";
     private int winnerRating = 0;
@@ -56,11 +59,32 @@ public class LogicManager : MonoBehaviour
 
     protected virtual void Start()
     {
+        LoadGameSettings();
+
         GenerateBoard(width, height);
         currentNode = board[(width - 1) / 2, (height - 1) / 2];
         FitPerspectiveCameraToField();
         UpdatePlayerInfoUI();
+        
         uiManager = FindFirstObjectByType<UIManager>();
+    }
+
+    private void LoadGameSettings()
+    {
+        if (PlayerPrefs.HasKey("Game_TimeMinutes"))
+        {
+            int time = PlayerPrefs.GetInt("Game_TimeMinutes", 1);
+            player1Time = time * 60f;
+            player2Time = time * 60f;
+        }
+        
+        if (PlayerPrefs.HasKey("Game_TimeUnlimited"))
+        {
+            isTimeUnlimited = PlayerPrefs.GetInt("Game_TimeUnlimited") == 1;
+        }
+
+        if (PlayerPrefs.HasKey("Game_Player1Name")) player1Nickname = PlayerPrefs.GetString("Game_Player1Name");
+        if (PlayerPrefs.HasKey("Game_Player2Name")) player2Nickname = PlayerPrefs.GetString("Game_Player2Name");
     }
 
     public void RestartGame()
@@ -164,31 +188,42 @@ public class LogicManager : MonoBehaviour
         {
             is2TimerRunning = false;
             is1TimerRunning = true;
-            player1Time -= Time.deltaTime;
-            if (player1Time <= 0f)
+            
+            if (!isTimeUnlimited)
             {
-                player1Time = 0f;
-                SetWinner(2); // Player 2 wins by timeout
-                isGameOver = true;
-                Debug.Log("Player 2 wins by timeout!");
+                player1Time -= Time.deltaTime;
+                if (player1Time <= 0f)
+                {
+                    player1Time = 0f;
+                    SetWinner(2); // Player 2 wins by timeout
+                    isGameOver = true;
+                    Debug.Log("Player 2 wins by timeout!");
+                }
             }
         }
         else
         {
             is1TimerRunning = false;
             is2TimerRunning = true;
-            player2Time -= Time.deltaTime;
-            if (player2Time <= 0f)
+            
+            if (!isTimeUnlimited)
             {
-                player2Time = 0f;
-                SetWinner(1); // Player 1 wins by timeout
-                isGameOver = true;
-                Debug.Log("Player 1 wins by timeout!");
+                player2Time -= Time.deltaTime;
+                if (player2Time <= 0f)
+                {
+                    player2Time = 0f;
+                    SetWinner(1); // Player 1 wins by timeout
+                    isGameOver = true;
+                    Debug.Log("Player 1 wins by timeout!");
+                }
             }
         }
 
-        isPlayer1TimeLow = player1Time <= 20f;
-        isPlayer2TimeLow = player2Time <= 20f;
+        if (!isTimeUnlimited)
+        {
+            isPlayer1TimeLow = player1Time <= 20f;
+            isPlayer2TimeLow = player2Time <= 20f;
+        }
 
         UpdateTimerUI();
         }
@@ -757,10 +792,20 @@ public class LogicManager : MonoBehaviour
 
     private void UpdateTimerUI()
     {
-        if (player1TimerText != null)
-            player1TimerText.text = FormatTime(player1Time);
-        if (player2TimerText != null)
-            player2TimerText.text = FormatTime(player2Time);
+        if (isTimeUnlimited)
+        {
+            if (player1TimerText != null)
+                player1TimerText.text = (currentPlayer == 1) ? "Turn" : "";
+            if (player2TimerText != null)
+                player2TimerText.text = (currentPlayer == 2) ? "Turn" : "";
+        }
+        else
+        {
+            if (player1TimerText != null)
+                player1TimerText.text = FormatTime(player1Time);
+            if (player2TimerText != null)
+                player2TimerText.text = FormatTime(player2Time);
+        }
     }
 
     private string FormatTime(float time)

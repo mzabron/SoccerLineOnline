@@ -5297,6 +5297,7 @@ MonoBehaviour:
   local2PlayersButton: {fileID: 519795202}
   localhostPanel: {fileID: 853951230}
   localhostCancelButton: {fileID: 1866900158}
+  localhostPlayButton: {fileID: 814451328}
   noTimeToggle: {fileID: 650290507}
   timeSelectionText: {fileID: 1263934813}
   timeLeftArrowButton: {fileID: 1314816132}
@@ -5306,6 +5307,12 @@ MonoBehaviour:
   hintPanel: {fileID: 315869806}
   hintCancelButton: {fileID: 1679903891}
   startTutorialButton: {fileID: 1062815093}
+  playOnlineButton: {fileID: 278833354}
+  singlePlayerButton: {fileID: 736487733}
+  playWithFriendButton: {fileID: 1392227913}
+  comingSoonPanel: {fileID: 1083422430}
+  comingSoonDisplayDuration: 1
+  comingSoonFadeDuration: 0.5
 --- !u!4 &747473274
 Transform:
   m_ObjectHideFlags: 0
@@ -7731,7 +7738,6 @@ GameObject:
   - component: {fileID: 1083422431}
   - component: {fileID: 1083422434}
   - component: {fileID: 1083422433}
-  - component: {fileID: 1083422432}
   m_Layer: 5
   m_Name: ComingSoonPanel
   m_TagString: Untagged
@@ -7759,50 +7765,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1083422432
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1083422430}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a66d99f4a14b2ea46a5fbb5e8b1a02d1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameOverPanelAnimator
-  animationType: 1
-  animationDuration: 0.6
-  animationCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  playOnEnable: 0
-  AddFadingEffect: 1
-  delayBeforeAnimation: 0
-  OnAnimationComplete:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &1083422433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13941,8 +13903,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 165, y: -262.00006}
-  m_SizeDelta: {x: 470.3661, y: 103.5421}
+  m_AnchoredPosition: {x: 154, y: -262.00006}
+  m_SizeDelta: {x: 404.9919, y: 103.5421}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1866601174
 MonoBehaviour:
@@ -13964,7 +13926,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: (coming soon)
+  m_text: (rating system coming soon)
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 399076fd60d34ac44a8fd71c379f746a, type: 2}
   m_sharedMaterial: {fileID: 1810811539677887356, guid: 399076fd60d34ac44a8fd71c379f746a, type: 2}
@@ -13991,14 +13953,14 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 28
+  m_fontSizeBase: 28
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
