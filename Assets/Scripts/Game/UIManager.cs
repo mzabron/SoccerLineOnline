@@ -39,9 +39,15 @@ public class UIManager : SettingsUI
     private Color originalPlayer2TextColor;
     private Color originalPlayer2PanelColor;
 
+
+    public static bool IsQuitPanelOpen { get; private set; } = false;
+
     protected override void Start()
     {
         base.Start();
+        // Reset flags on start to be safe
+        IsQuitPanelOpen = false;
+        
         logicManager = FindFirstObjectByType<LogicManager>();
         InitializeGameUI();
         InitializeQuitUI();
@@ -233,6 +239,8 @@ public class UIManager : SettingsUI
 
     public void OnExitButtonClick()
     {
+        IsQuitPanelOpen = true;
+
         if (gameOverCanvas != null) gameOverCanvas.SetActive(true);
         if (quitPanel != null) quitPanel.SetActive(true);
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
@@ -240,6 +248,8 @@ public class UIManager : SettingsUI
 
     public void OnQuitYesButtonClick()
     {
+        IsQuitPanelOpen = false;
+
         if (quitPanel != null)
         {
             quitPanel.SetActive(false);
@@ -257,6 +267,8 @@ public class UIManager : SettingsUI
 
     public void OnQuitNoButtonClick()
     {
+        IsQuitPanelOpen = false;
+
         if (quitPanel != null)
         {
             quitPanel.SetActive(false);
@@ -285,6 +297,9 @@ public class UIManager : SettingsUI
             gameOverCanvas.SetActive(true);
             if (gameOverPanel != null) gameOverPanel.SetActive(true);
             if (quitPanel != null) quitPanel.SetActive(false);
+
+
+            IsQuitPanelOpen = false; 
 
             if (winnerMessageText != null)
             {
@@ -324,6 +339,9 @@ public class UIManager : SettingsUI
     protected override void OnDestroy()
     {
         base.OnDestroy();
+        
+
+        IsQuitPanelOpen = false;
 
         if (exitButton != null)
             exitButton.onClick.RemoveListener(OnExitButtonClick);

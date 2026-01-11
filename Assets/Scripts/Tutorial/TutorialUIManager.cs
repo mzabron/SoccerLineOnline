@@ -13,9 +13,13 @@ public class TutorialUIManager : MonoBehaviour
     [SerializeField] private Button quitYesButton;
     [SerializeField] private Button quitNoButton;
 
+
+    public static bool IsQuitPanelOpen { get; private set; } = false;
+
     private void Awake()
     {
         instance = this;
+        IsQuitPanelOpen = false;
     }
 
     private void Start()
@@ -47,12 +51,14 @@ public class TutorialUIManager : MonoBehaviour
     {
         if (quitPanel != null)
         {
+            IsQuitPanelOpen = true;
             quitPanel.SetActive(true);
         }
     }
 
     public void OnQuitYesButtonClick()
     {
+        IsQuitPanelOpen = false;
         if (quitPanel != null)
         {
             quitPanel.SetActive(false);
@@ -63,6 +69,7 @@ public class TutorialUIManager : MonoBehaviour
 
     public void OnQuitNoButtonClick()
     {
+        IsQuitPanelOpen = false;
         if (quitPanel != null)
         {
             quitPanel.SetActive(false);
@@ -84,6 +91,8 @@ public class TutorialUIManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        IsQuitPanelOpen = false;
+
         if (exitButton != null)
             exitButton.onClick.RemoveListener(OnExitButtonClick);
         

@@ -112,7 +112,8 @@ public class LogicManager : MonoBehaviour
                 return;
         }
 
-        if (Touchscreen.current != null && !UIManager.IsSettingsOpen  && canMove)
+
+        if (Touchscreen.current != null && !UIManager.IsSettingsOpen && !UIManager.IsQuitPanelOpen && canMove)
         {
             var touch = Touchscreen.current.primaryTouch;
 
@@ -149,7 +150,8 @@ public class LogicManager : MonoBehaviour
 
 #if UNITY_EDITOR
 
-        if (Mouse.current != null && !UIManager.IsSettingsOpen)
+
+        if (Mouse.current != null && !UIManager.IsSettingsOpen && !UIManager.IsQuitPanelOpen)
         {
             if (Mouse.current.leftButton.wasPressedThisFrame)
             {

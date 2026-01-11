@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
@@ -107,9 +108,13 @@ public class TutorialLogicManager : LogicManager
 
     protected override void Update()
     {
+
+        if (TutorialUIManager.IsQuitPanelOpen || UIManager.IsSettingsOpen)
+            return;
+
         base.Update();
 
-        // If completion UI is up, don't intercept clicks/taps (let UI buttons work)
+        // If completion UI is up, don't intercept clicks/taps
         if (completePanel != null && completePanel.activeInHierarchy)
             return;
 
@@ -264,13 +269,16 @@ public class TutorialLogicManager : LogicManager
 
         if (isWaitingForTypewriterComplete || !canMove)
         {
-
             if (Touchscreen.current != null)
             {
                 var touch = Touchscreen.current.primaryTouch;
                 if (touch.press.wasPressedThisFrame)
                 {
-                    HandleTutorialInput();
+
+                    if (IsClickValid(touch.position.ReadValue()))
+                    {
+                        HandleTutorialInput();
+                    }
                 }
             }
 
@@ -279,11 +287,41 @@ public class TutorialLogicManager : LogicManager
             {
                 if (Mouse.current.leftButton.wasPressedThisFrame)
                 {
-                    HandleTutorialInput();
+                    if (IsClickValid(Mouse.current.position.ReadValue()))
+                    {
+                        HandleTutorialInput();
+                    }
                 }
             }
 #endif
         }
+    }
+
+
+    private bool IsClickValid(Vector2 screenPos)
+    {
+        PointerEventData eventDataCurrentPosition = new PointerEventData(EventSystem.current);
+        eventDataCurrentPosition.position = screenPos;
+        
+        List<RaycastResult> results = new List<RaycastResult>();
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.RaycastAll(eventDataCurrentPosition, results);
+        }
+
+        foreach (var result in results)
+        {
+            if (result.gameObject.GetComponentInParent<Button>() != null ||
+                result.gameObject.GetComponentInParent<Toggle>() != null ||
+                result.gameObject.GetComponentInParent<Slider>() != null ||
+                result.gameObject.GetComponentInParent<InputField>() != null ||
+                result.gameObject.GetComponentInParent<TMP_InputField>() != null)
+            {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     private void HighlightBoundaryEdges()
