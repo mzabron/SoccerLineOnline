@@ -1305,7 +1305,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 345628982}
         m_TargetAssemblyTypeName: TutorialUIManager, Assembly-CSharp
         m_MethodName: OnGetStartedButtonClicked
         m_Mode: 1
