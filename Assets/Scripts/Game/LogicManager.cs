@@ -390,11 +390,16 @@ public class LogicManager : MonoBehaviour
         {
             int winner = (currentPlayer == 1) ? 2 : 1; // The other player wins when current player is blocked
             SetWinner(winner);
-            isGameOver = true;
 
             Soccer soccerScript = this.soccer.GetComponent<Soccer>();
             if (soccerScript != null)
+            {
                 soccerScript.MoveToGoal(to);
+            }
+            else
+            {
+                isGameOver = true;
+            }
             return;
         }
 
